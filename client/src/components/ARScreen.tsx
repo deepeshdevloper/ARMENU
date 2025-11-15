@@ -1,49 +1,116 @@
-import { XR, createXRStore } from "@react-three/xr";
+import { XR, createXRStore, useXR } from "@react-three/xr";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useARMenu } from "@/lib/stores/useARMenu";
+import { useHaptics } from "@/hooks/useHaptics";
 import { ChevronLeft, RotateCw, Maximize2 } from "lucide-react";
 
 const xrStore = createXRStore();
 
-function Reticle({ color }: { color: string }) {
-  const reticleRef = useRef<THREE.Group>(null);
+type ReticleState = 'searching' | 'found' | 'placed';
 
-  useFrame((state) => {
-    if (reticleRef.current) {
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 3) * 0.1;
-      reticleRef.current.scale.setScalar(scale * 0.5);
+function Reticle({ 
+  color, 
+  state,
+  onPlaced 
+}: { 
+  color: string; 
+  state: ReticleState;
+  onPlaced: (position: THREE.Vector3) => void;
+}) {
+  const reticleRef = useRef<THREE.Group>(null);
+  const [hitPosition, setHitPosition] = useState<THREE.Vector3 | null>(null);
+  const { trigger } = useHaptics();
+
+  const { session } = useXR();
+  
+  useFrame(() => {
+    if (session && reticleRef.current && state !== 'placed') {
+      const referenceSpace = (session as any).referenceSpace;
+      if (referenceSpace) {
+        reticleRef.current.visible = true;
+        
+        if (!hitPosition && state === 'searching') {
+          const tempPosition = new THREE.Vector3(0, -0.5, -1.5);
+          setHitPosition(tempPosition);
+          trigger('light');
+        }
+      }
     }
   });
 
+  useFrame((frameState) => {
+    if (reticleRef.current && state !== 'placed') {
+      const baseScale = state === 'found' ? 0.6 : 0.5;
+      const pulse = 1 + Math.sin(frameState.clock.elapsedTime * 4) * 0.15;
+      reticleRef.current.scale.setScalar(baseScale * pulse);
+    }
+  });
+
+  useEffect(() => {
+    const handleTouch = () => {
+      if (hitPosition && state === 'found') {
+        trigger('heavy');
+        onPlaced(hitPosition);
+      }
+    };
+
+    window.addEventListener('click', handleTouch);
+    return () => window.removeEventListener('click', handleTouch);
+  }, [hitPosition, state, onPlaced, trigger]);
+
+  const reticleColor = state === 'searching' ? '#FCD34D' : 
+                       state === 'found' ? '#10B981' : color;
+  const reticleOpacity = state === 'placed' ? 0 : 0.8;
+
   return (
-    <group ref={reticleRef} position={[0, 0, -2]}>
+    <group ref={reticleRef} matrixAutoUpdate={false} visible={false}>
       <mesh rotation-x={-Math.PI / 2}>
         <ringGeometry args={[0.1, 0.12, 32]} />
         <meshBasicMaterial 
-          color={color} 
+          color={reticleColor} 
           transparent 
-          opacity={0.8}
+          opacity={reticleOpacity}
         />
       </mesh>
       <mesh rotation-x={-Math.PI / 2}>
         <circleGeometry args={[0.02, 32]} />
-        <meshBasicMaterial color={color} />
+        <meshBasicMaterial color={reticleColor} opacity={reticleOpacity} transparent />
       </mesh>
+      {state === 'found' && (
+        <>
+          <mesh rotation-x={-Math.PI / 2} position={[0, 0.001, 0]}>
+            <ringGeometry args={[0.15, 0.16, 32]} />
+            <meshBasicMaterial color="#10B981" transparent opacity={0.3} />
+          </mesh>
+          <mesh rotation-x={-Math.PI / 2} position={[0, 0.002, 0]}>
+            <ringGeometry args={[0.18, 0.19, 32]} />
+            <meshBasicMaterial color="#10B981" transparent opacity={0.2} />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
 
-function ARDishModel({ modelPath, color }: { 
+function ARDishModel({ 
+  modelPath, 
+  color,
+  position,
+  isPlaced 
+}: { 
   modelPath: string; 
   color: string;
+  position: THREE.Vector3 | null;
+  isPlaced: boolean;
 }) {
   const gltf = useGLTF(modelPath);
   const clonedModel = useRef<THREE.Group | null>(null);
   const modelRef = useRef<THREE.Group>(null);
+  const [animationProgress, setAnimationProgress] = useState(0);
 
   useEffect(() => {
     const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
@@ -60,26 +127,75 @@ function ARDishModel({ modelPath, color }: {
     }
   }, [gltf]);
 
-  useFrame(() => {
+  useEffect(() => {
+    if (isPlaced) {
+      setAnimationProgress(0);
+    }
+  }, [isPlaced]);
+
+  useFrame((state, delta) => {
     if (modelRef.current) {
-      modelRef.current.rotation.y += 0.005;
+      if (isPlaced && position) {
+        if (animationProgress < 1) {
+          setAnimationProgress(Math.min(1, animationProgress + delta * 2));
+          const currentY = THREE.MathUtils.lerp(position.y + 0.3, position.y, animationProgress);
+          modelRef.current.position.set(position.x, currentY, position.z);
+          modelRef.current.scale.setScalar(2.5 * animationProgress);
+        }
+        modelRef.current.rotation.y += 0.005;
+      }
     }
   });
 
+  if (!isPlaced || !position) return null;
+
   return (
-    <group ref={modelRef} position={[0, 0, -1.5]} scale={2.5}>
+    <group ref={modelRef} scale={0}>
       {clonedModel.current && (
         <primitive object={clonedModel.current} />
       )}
-      <pointLight color={color} intensity={0.8} distance={3} />
+      <pointLight color={color} intensity={0.8} distance={3} position={[0, 0.5, 0]} />
+      <mesh position={[0, 0.01, 0]} rotation-x={-Math.PI / 2} receiveShadow>
+        <circleGeometry args={[0.3, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={0.2} />
+      </mesh>
     </group>
   );
 }
 
 function ARScene({ dish }: { dish: any }) {
+  const [reticleState, setReticleState] = useState<ReticleState>('searching');
+  const [modelPosition, setModelPosition] = useState<THREE.Vector3 | null>(null);
+  const { trigger } = useHaptics();
+  const { session } = useXR();
+
   const color = dish.emoji === '🔥' ? '#EF4444' : 
                 dish.emoji === '🍫' ? '#F9A8D4' :
                 dish.emoji === '🍹' ? '#67E8F9' : '#6EE7B7';
+
+  useEffect(() => {
+    if (session) {
+      console.log('AR session started');
+      trigger('medium');
+    }
+  }, [session, trigger]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (reticleState === 'searching') {
+        setReticleState('found');
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [reticleState]);
+
+  const handlePlaced = (position: THREE.Vector3) => {
+    console.log('Dish placed at:', position);
+    setModelPosition(position);
+    setReticleState('placed');
+    trigger('heavy');
+  };
 
   return (
     <>
@@ -87,10 +203,12 @@ function ARScene({ dish }: { dish: any }) {
       <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
       <pointLight position={[-5, 3, -5]} intensity={0.3} />
       
-      <Reticle color={color} />
+      <Reticle color={color} state={reticleState} onPlaced={handlePlaced} />
       <ARDishModel 
         modelPath={dish.modelPath} 
         color={color}
+        position={modelPosition}
+        isPlaced={reticleState === 'placed'}
       />
     </>
   );
@@ -138,39 +256,82 @@ function FallbackViewer({ dish }: { dish: any }) {
 export function ARScreen() {
   const { selectedDish, setScreen } = useARMenu();
   const [isARSupported, setIsARSupported] = useState(true);
-  const [showInstructions, setShowInstructions] = useState(true);
-  const [showNoSurfaceWarning, setShowNoSurfaceWarning] = useState(false);
+  const [arStatus, setARStatus] = useState<'loading' | 'ready' | 'active' | 'error'>('loading');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [infoVisible, setInfoVisible] = useState(true);
+  const [modelLoading, setModelLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const { trigger } = useHaptics();
 
   useEffect(() => {
     const checkARSupport = async () => {
-      if ('xr' in navigator) {
-        try {
-          const supported = await (navigator as any).xr?.isSessionSupported('immersive-ar');
-          setIsARSupported(supported);
-        } catch {
-          setIsARSupported(false);
-        }
-      } else {
+      console.log('Checking AR support...');
+      
+      if (!('xr' in navigator)) {
+        console.warn('WebXR not available - device or browser does not support AR');
         setIsARSupported(false);
+        setARStatus('error');
+        setErrorMessage('Your browser doesn\'t support AR features. Please use Chrome or Safari on a compatible device.');
+        return;
+      }
+
+      try {
+        const xr = (navigator as any).xr;
+        if (!xr) {
+          throw new Error('XR object not found');
+        }
+
+        const supported = await xr.isSessionSupported('immersive-ar');
+        console.log('AR session support:', supported);
+        
+        setIsARSupported(supported);
+        
+        if (supported) {
+          setARStatus('ready');
+          trigger('light');
+        } else {
+          setARStatus('error');
+          setErrorMessage('AR is not available on this device. You can still view the 3D model below.');
+        }
+      } catch (error) {
+        console.error('Error checking AR support:', error);
+        setIsARSupported(false);
+        setARStatus('error');
+        setErrorMessage('Unable to initialize AR. Please ensure you have camera permissions enabled.');
       }
     };
 
     checkARSupport();
-
-    const timer = setTimeout(() => {
-      setShowInstructions(false);
-    }, 4000);
 
     const infoTimer = setTimeout(() => {
       setInfoVisible(false);
     }, 3000);
 
     return () => {
-      clearTimeout(timer);
       clearTimeout(infoTimer);
     };
-  }, []);
+  }, [trigger, retryCount]);
+
+  const handleRetry = () => {
+    console.log('Retrying AR initialization...');
+    setARStatus('loading');
+    setErrorMessage('');
+    setRetryCount(prev => prev + 1);
+    trigger('light');
+  };
+
+  const handleARStart = () => {
+    trigger('medium');
+    setARStatus('active');
+    try {
+      xrStore.enterAR();
+      console.log('Entering AR mode...');
+    } catch (error) {
+      console.error('Error starting AR:', error);
+      setARStatus('error');
+      setErrorMessage('Failed to start AR session. Please try again.');
+    }
+  };
 
   if (!selectedDish) return null;
 
@@ -184,7 +345,7 @@ export function ARScreen() {
       </button>
 
       <AnimatePresence>
-        {showInstructions && (
+        {arStatus === 'loading' && (
           <motion.div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 max-w-md px-6"
             initial={{ opacity: 0 }}
@@ -192,11 +353,11 @@ export function ARScreen() {
             exit={{ opacity: 0 }}
           >
             <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-6 text-center">
-              <p className="text-white text-lg mb-2">
-                📱 Move your device slowly
-              </p>
-              <p className="text-white/70 text-sm">
-                Point at a flat surface to detect the table
+              <div className="mb-3">
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto" />
+              </div>
+              <p className="text-white text-lg">
+                Initializing AR...
               </p>
             </div>
           </motion.div>
@@ -243,40 +404,45 @@ export function ARScreen() {
         </button>
       </div>
 
-      {isARSupported ? (
+      {isARSupported && arStatus === 'ready' ? (
         <>
-          <button
-            onClick={() => {
-              xrStore.enterAR();
-            }}
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 50,
-              padding: '16px 32px',
-              borderRadius: '9999px',
-              background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-              color: 'white',
-              fontWeight: 'bold',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
+          <motion.button
+            onClick={handleARStart}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 px-8 py-4 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white font-bold text-base shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            Start AR Experience
-          </button>
+            🚀 Start AR Experience
+          </motion.button>
 
-          <Canvas>
+          <Canvas onCreated={() => setModelLoading(false)}>
             <XR store={xrStore}>
               <Suspense fallback={null}>
                 <ARScene dish={selectedDish} />
               </Suspense>
             </XR>
           </Canvas>
+          
+          {modelLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+              <div className="text-white text-center">
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
+                <p>Loading 3D model...</p>
+              </div>
+            </div>
+          )}
         </>
-      ) : (
+      ) : arStatus === 'active' ? (
+        <Canvas onCreated={() => setModelLoading(false)}>
+          <XR store={xrStore}>
+            <Suspense fallback={null}>
+              <ARScene dish={selectedDish} />
+            </Suspense>
+          </XR>
+        </Canvas>
+      ) : arStatus === 'error' ? (
         <div className="h-full flex flex-col">
           <div className="flex-1">
             <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>

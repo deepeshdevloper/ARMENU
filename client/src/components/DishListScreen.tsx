@@ -4,6 +4,7 @@ import { useARMenu } from "@/lib/stores/useARMenu";
 import { getDishesForCategory } from "@/data/menuData";
 import { ChevronLeft } from "lucide-react";
 import type { Dish } from "@/lib/stores/useARMenu";
+import { useHaptics } from "@/hooks/useHaptics";
 
 function DishCard({ dish, index, isActive, onClick }: {
   dish: Dish;
@@ -18,7 +19,7 @@ function DishCard({ dish, index, isActive, onClick }: {
 
   return (
     <motion.div
-      className="absolute inset-x-8 top-1/2 -translate-y-1/2"
+      className="absolute inset-x-4 sm:inset-x-8 md:inset-x-12 top-1/2 -translate-y-1/2"
       style={{ zIndex }}
       initial={{ opacity: 0, y: 100 }}
       animate={{
@@ -35,7 +36,7 @@ function DishCard({ dish, index, isActive, onClick }: {
       onClick={onClick}
     >
       <div 
-        className="relative rounded-3xl overflow-hidden shadow-2xl cursor-pointer"
+        className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl cursor-pointer"
         style={{
           boxShadow: `0 20px 60px rgba(0,0,0,0.3), 0 0 40px ${dish.emoji === '🔥' ? 'rgba(239, 68, 68, 0.3)' : 
                      dish.emoji === '🍫' ? 'rgba(249, 168, 212, 0.3)' :
@@ -43,7 +44,7 @@ function DishCard({ dish, index, isActive, onClick }: {
                      'rgba(110, 231, 183, 0.3)'}`
         }}
       >
-        <div className="relative h-80 overflow-hidden">
+        <div className="relative h-64 sm:h-72 md:h-80 overflow-hidden">
           <img 
             src={dish.image} 
             alt={dish.name}
@@ -56,17 +57,17 @@ function DishCard({ dish, index, isActive, onClick }: {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         </div>
         
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="text-3xl font-bold tracking-wide">
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-wide neon-text">
               {dish.emoji} {dish.name}
             </h3>
-            <span className="text-sm bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+            <span className="text-xs sm:text-sm glass-effect px-2 sm:px-3 py-1 rounded-full">
               {dish.calories} cal
             </span>
           </div>
           
-          <p className="text-white/90 text-sm mb-4">
+          <p className="text-white/90 text-xs sm:text-sm mb-3 sm:mb-4">
             {dish.description}
           </p>
           
@@ -112,6 +113,7 @@ export function DishListScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [touchStart, setTouchStart] = useState(0);
+  const { trigger } = useHaptics();
 
   useEffect(() => {
     if (selectedCategory) {
@@ -122,10 +124,12 @@ export function DishListScreen() {
 
   const handleNext = () => {
     setActiveIndex((prev) => (prev + 1) % dishes.length);
+    trigger('light');
   };
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev - 1 + dishes.length) % dishes.length);
+    trigger('light');
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -147,11 +151,10 @@ export function DishListScreen() {
 
   const handleDishClick = (dish: Dish, index: number) => {
     if (index === activeIndex) {
-      if (navigator.vibrate) {
-        navigator.vibrate(100);
-      }
+      trigger('medium');
       selectDish(dish);
     } else {
+      trigger('light');
       setActiveIndex(index);
     }
   };

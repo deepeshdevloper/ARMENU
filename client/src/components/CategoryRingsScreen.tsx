@@ -1,11 +1,13 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { Suspense, useRef, useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { categories } from "@/data/menuData";
 import { useARMenu, Category } from "@/lib/stores/useARMenu";
+import { useHaptics } from "@/hooks/useHaptics";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 function DonutRing({ category, index, isSelected, onClick }: { 
   category: Category; 
@@ -68,9 +70,10 @@ function DonutRing({ category, index, isSelected, onClick }: {
   );
 }
 
-function Scene({ selectedCategory, onSelect }: { 
+function Scene({ selectedCategory, onSelect, onVibrate }: { 
   selectedCategory: Category | null; 
   onSelect: (cat: Category) => void;
+  onVibrate: () => void;
 }) {
   return (
     <>
@@ -85,9 +88,7 @@ function Scene({ selectedCategory, onSelect }: {
           index={index}
           isSelected={selectedCategory?.id === category.id}
           onClick={() => {
-            if (navigator.vibrate) {
-              navigator.vibrate(50);
-            }
+            onVibrate();
             onSelect(category);
           }}
         />
@@ -107,14 +108,24 @@ export function CategoryRingsScreen() {
   const selectCategory = useARMenu(state => state.selectCategory);
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { trigger } = useHaptics();
+  const isMobile = useIsMobile();
 
   const handleSelect = (category: Category) => {
+    if (isTransitioning) return;
+    
     setSelectedCat(category);
     setIsTransitioning(true);
+    trigger('medium');
     
     setTimeout(() => {
       selectCategory(category);
-    }, 800);
+      setIsTransitioning(false);
+    }, 600);
+  };
+
+  const handleVibrate = () => {
+    trigger('light');
   };
 
   return (
@@ -128,15 +139,15 @@ export function CategoryRingsScreen() {
       />
       
       <div className="absolute inset-0">
-        <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
+        <Canvas camera={{ position: [0, 0, isMobile ? 10 : 8], fov: isMobile ? 60 : 50 }}>
           <Suspense fallback={null}>
-            <Scene selectedCategory={selectedCat} onSelect={handleSelect} />
+            <Scene selectedCategory={selectedCat} onSelect={handleSelect} onVibrate={handleVibrate} />
           </Suspense>
         </Canvas>
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end pb-20 pointer-events-none">
-        <div className="flex gap-8">
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end safe-bottom pb-12 sm:pb-16 md:pb-20 pointer-events-none px-4">
+        <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8 justify-center max-w-4xl">
           {categories.map((category) => (
             <motion.div
               key={category.id}
@@ -149,7 +160,7 @@ export function CategoryRingsScreen() {
               }}
               transition={{ duration: 0.3 }}
             >
-              <p className="text-white text-xl font-bold tracking-wider drop-shadow-lg">
+              <p className="text-white text-base sm:text-lg md:text-xl font-bold tracking-wider drop-shadow-lg neon-text">
                 {category.emoji} {category.name}
               </p>
             </motion.div>
@@ -158,15 +169,15 @@ export function CategoryRingsScreen() {
       </div>
       
       <motion.div
-        className="absolute top-8 left-0 right-0 text-center"
+        className="absolute top-6 sm:top-8 left-0 right-0 text-center safe-top px-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
-        <h1 className="text-white text-4xl font-bold tracking-wide drop-shadow-xl">
+        <h1 className="text-white text-3xl sm:text-4xl md:text-5xl font-bold tracking-wide drop-shadow-xl neon-text">
           Choose Your Vibe
         </h1>
-        <p className="text-white/80 text-sm mt-2">Tap a ring to explore dishes</p>
+        <p className="text-white/80 text-xs sm:text-sm mt-2">Tap a ring to explore dishes</p>
       </motion.div>
     </div>
   );

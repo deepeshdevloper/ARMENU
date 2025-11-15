@@ -1,9 +1,9 @@
-modules = ["nodejs-20", "bash", "web"]
+modules = ["nodejs-20", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 36597
+localPort = 45261
 externalPort = 3001
 
 [workflows]
@@ -39,5 +39,9 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [agent]
 integrations = ["gamestack_custom_model:1.0.0"]
+expertMode = true
