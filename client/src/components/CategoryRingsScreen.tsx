@@ -1,10 +1,10 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Text } from "@react-three/drei";
-import { Suspense, useRef, useState, useMemo } from "react";
+import { Suspense, useRef, useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { categories } from "@/data/menuData";
+import { categories as defaultCategories } from "@/data/menuData";
 import { useARMenu, Category } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useIsMobile } from "@/hooks/use-is-mobile";
@@ -52,9 +52,9 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
   );
 }
 
-function DonutRing({ category, index, isSelected, onClick, isMobile }: { 
+function DonutRing({ category, position, isSelected, onClick, isMobile }: { 
   category: Category; 
-  index: number; 
+  position: [number, number, number];
   isSelected: boolean;
   onClick: () => void;
   isMobile: boolean;
@@ -90,13 +90,13 @@ function DonutRing({ category, index, isSelected, onClick, isMobile }: {
   const opacity = isSelected ? 1 : isHovered ? 1 : 0.85;
   const modelPath = categoryModelMap[category.id];
   
-  const ringSize = isMobile ? 1.4 : 1.6;
-  const ringThickness = isMobile ? 0.12 : 0.15;
+  const ringSize = isMobile ? 1.2 : 1.4;
+  const ringThickness = isMobile ? 0.1 : 0.12;
 
   return (
     <group 
       ref={groupRef}
-      position={[(index - 1.5) * (isMobile ? 3.8 : 4.2), 0, 0]}
+      position={position}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
       onClick={onClick}
@@ -152,12 +152,57 @@ function DonutRing({ category, index, isSelected, onClick, isMobile }: {
   );
 }
 
-function Scene({ selectedCategory, onSelect, onVibrate, isMobile }: { 
+function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: { 
   selectedCategory: Category | null; 
   onSelect: (cat: Category) => void;
   onVibrate: () => void;
   isMobile: boolean;
+  categories: Category[];
 }) {
+  const positions = useMemo(() => {
+    const count = categories.length;
+    
+    const baseSpacing = isMobile ? 2.6 : 2.8;
+    const spacing = count <= 3 ? baseSpacing * 1.1 : count === 4 ? baseSpacing : baseSpacing * 0.9;
+    
+    if (count <= 4) {
+      const totalWidth = (count - 1) * spacing;
+      return categories.map((_, index) => {
+        const x = index * spacing - totalWidth / 2;
+        return [x, 0, 0] as [number, number, number];
+      });
+    } else if (count <= 6) {
+      const itemsPerRow = 3;
+      const rows = Math.ceil(count / itemsPerRow);
+      
+      return categories.map((_, index) => {
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+        const itemsInRow = Math.min(itemsPerRow, count - row * itemsPerRow);
+        
+        const x = col * spacing - (itemsInRow - 1) * spacing / 2;
+        const y = (rows - 1) * spacing / 2 - row * spacing;
+        
+        return [x, y, 0] as [number, number, number];
+      });
+    } else {
+      const itemsPerRow = Math.min(4, Math.ceil(Math.sqrt(count)));
+      const rows = Math.ceil(count / itemsPerRow);
+      const gridSpacing = spacing * 0.85;
+      
+      return categories.map((_, index) => {
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+        const itemsInRow = Math.min(itemsPerRow, count - row * itemsPerRow);
+        
+        const x = col * gridSpacing - (itemsInRow - 1) * gridSpacing / 2;
+        const y = (rows - 1) * gridSpacing / 2 - row * gridSpacing;
+        
+        return [x, y, 0] as [number, number, number];
+      });
+    }
+  }, [categories.length, isMobile]);
+
   return (
     <>
       <ambientLight intensity={0.8} />
@@ -170,7 +215,7 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile }: {
         <DonutRing
           key={category.id}
           category={category}
-          index={index}
+          position={positions[index]}
           isSelected={selectedCategory?.id === category.id}
           onClick={() => {
             onVibrate();
@@ -198,6 +243,29 @@ export function CategoryRingsScreen() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { trigger } = useHaptics();
   const isMobile = useIsMobile();
+
+  const categories = defaultCategories;
+
+  const cameraConfig = useMemo(() => {
+    const count = categories.length;
+    
+    if (count <= 4) {
+      return {
+        position: [0, 0, isMobile ? 11 : 9] as [number, number, number],
+        fov: isMobile ? 50 : 45
+      };
+    } else if (count <= 9) {
+      return {
+        position: [0, 0, isMobile ? 14 : 12] as [number, number, number],
+        fov: isMobile ? 55 : 50
+      };
+    } else {
+      return {
+        position: [0, 0, isMobile ? 18 : 15] as [number, number, number],
+        fov: isMobile ? 60 : 55
+      };
+    }
+  }, [categories.length, isMobile]);
 
   const handleSelect = (category: Category) => {
     if (isTransitioning) return;
@@ -227,39 +295,42 @@ export function CategoryRingsScreen() {
       />
       
       <div className="absolute inset-0">
-        <Canvas camera={{ position: [0, 0, isMobile ? 11 : 9], fov: isMobile ? 50 : 45 }}>
+        <Canvas camera={{ position: cameraConfig.position, fov: cameraConfig.fov }}>
           <Suspense fallback={null}>
             <Scene 
               selectedCategory={selectedCat} 
               onSelect={handleSelect} 
               onVibrate={handleVibrate}
               isMobile={isMobile}
+              categories={categories}
             />
           </Suspense>
         </Canvas>
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end safe-bottom pb-8 sm:pb-12 md:pb-16 pointer-events-none px-4">
-        <div className="flex flex-wrap gap-3 sm:gap-5 md:gap-6 justify-center max-w-4xl">
-          {categories.map((category) => (
-            <motion.div
-              key={category.id}
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ 
-                opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
-                y: 0,
-                scale: selectedCat?.id === category.id ? 1.15 : 1
-              }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
-                <p className="text-white text-sm sm:text-base md:text-lg font-semibold tracking-wide">
-                  {category.emoji} {category.name}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end safe-bottom pb-6 sm:pb-10 md:pb-14 pointer-events-none px-2 sm:px-4">
+        <div className="w-full max-w-6xl overflow-x-auto scrollbar-hide">
+          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 justify-center min-w-min px-2">
+            {categories.map((category) => (
+              <motion.div
+                key={category.id}
+                className="text-center flex-shrink-0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ 
+                  opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
+                  y: 0,
+                  scale: selectedCat?.id === category.id ? 1.1 : 1
+                }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                  <p className="text-white text-xs sm:text-sm md:text-base font-semibold tracking-wide whitespace-nowrap">
+                    {category.emoji} {category.name}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
       

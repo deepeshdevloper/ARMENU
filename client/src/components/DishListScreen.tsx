@@ -12,18 +12,21 @@ function DishCard({ dish, index, isActive, onClick }: {
   isActive: boolean;
   onClick: () => void;
 }) {
-  const rotation = isActive ? 0 : (index * 2 - 4);
-  const yOffset = isActive ? 0 : index * 20;
-  const scale = isActive ? 1 : 0.9 - (index * 0.05);
-  const zIndex = isActive ? 10 : 5 - index;
+  const maxRotation = 3;
+  const maxOffset = 25;
+  const rotation = isActive ? 0 : Math.min(index * 2, maxRotation);
+  const yOffset = isActive ? 0 : Math.min(index * 20, maxOffset);
+  const scale = isActive ? 1 : Math.max(0.85, 0.9 - (index * 0.03));
+  const zIndex = isActive ? 10 : Math.max(0, 5 - index);
+  const opacity = isActive ? 1 : index < 3 ? 0.95 - (index * 0.15) : 0.5;
 
   return (
     <motion.div
-      className="absolute inset-x-4 sm:inset-x-8 md:inset-x-12 top-1/2 -translate-y-1/2"
+      className="absolute inset-x-3 sm:inset-x-6 md:inset-x-10 lg:inset-x-16 top-1/2 -translate-y-1/2 max-w-2xl mx-auto"
       style={{ zIndex }}
       initial={{ opacity: 0, y: 100 }}
       animate={{
-        opacity: 1,
+        opacity,
         y: yOffset,
         scale,
         rotateZ: rotation,
@@ -36,7 +39,7 @@ function DishCard({ dish, index, isActive, onClick }: {
       onClick={onClick}
     >
       <div 
-        className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl cursor-pointer"
+        className="relative rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl cursor-pointer"
         style={{
           boxShadow: `0 20px 60px rgba(0,0,0,0.3), 0 0 40px ${dish.emoji === '🔥' ? 'rgba(239, 68, 68, 0.3)' : 
                      dish.emoji === '🍫' ? 'rgba(249, 168, 212, 0.3)' :
@@ -44,7 +47,7 @@ function DishCard({ dish, index, isActive, onClick }: {
                      'rgba(110, 231, 183, 0.3)'}`
         }}
       >
-        <div className="relative h-64 sm:h-72 md:h-80 overflow-hidden">
+        <div className="relative h-56 sm:h-64 md:h-72 lg:h-80 overflow-hidden">
           <img 
             src={dish.image} 
             alt={dish.name}
@@ -57,23 +60,23 @@ function DishCard({ dish, index, isActive, onClick }: {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         </div>
         
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-wide neon-text">
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 text-white">
+          <div className="flex items-start justify-between mb-1 sm:mb-2">
+            <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-wide neon-text">
               {dish.emoji} {dish.name}
             </h3>
-            <span className="text-xs sm:text-sm glass-effect px-2 sm:px-3 py-1 rounded-full">
+            <span className="text-xs sm:text-sm glass-effect px-2 sm:px-3 py-1 rounded-full flex-shrink-0">
               {dish.calories} cal
             </span>
           </div>
           
-          <p className="text-white/90 text-xs sm:text-sm mb-3 sm:mb-4">
+          <p className="text-white/90 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
             {dish.description}
           </p>
           
           {isActive && (
             <motion.button
-              className="w-full py-3 rounded-full font-bold text-white relative overflow-hidden"
+              className="w-full py-2 sm:py-3 rounded-full font-bold text-white relative overflow-hidden text-sm sm:text-base"
               style={{
                 background: `linear-gradient(135deg, ${dish.emoji === '🔥' ? '#EF4444' : 
                            dish.emoji === '🍫' ? '#F9A8D4' :
@@ -123,11 +126,13 @@ export function DishListScreen() {
   }, [selectedCategory]);
 
   const handleNext = () => {
+    if (dishes.length <= 1) return;
     setActiveIndex((prev) => (prev + 1) % dishes.length);
     trigger('light');
   };
 
   const handlePrev = () => {
+    if (dishes.length <= 1) return;
     setActiveIndex((prev) => (prev - 1 + dishes.length) % dishes.length);
     trigger('light');
   };
@@ -137,6 +142,8 @@ export function DishListScreen() {
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (dishes.length <= 1) return;
+    
     const touchEnd = e.changedTouches[0].clientY;
     const diff = touchStart - touchEnd;
     
@@ -171,41 +178,47 @@ export function DishListScreen() {
     >
       <button
         onClick={() => setScreen("categories")}
-        className="absolute top-6 left-6 z-50 p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
+        className="absolute top-4 sm:top-6 left-4 sm:left-6 z-50 p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors safe-top safe-left"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
       </button>
 
-      <div className="absolute top-6 right-6 z-50 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md">
-        <p className="text-white text-sm font-semibold">
+      <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-md safe-top safe-right">
+        <p className="text-white text-xs sm:text-sm font-semibold whitespace-nowrap">
           {selectedCategory.emoji} {selectedCategory.name}
         </p>
       </div>
 
       <div className="relative h-full">
-        {dishes.map((dish, index) => (
-          <DishCard
-            key={dish.id}
-            dish={dish}
-            index={Math.abs(index - activeIndex)}
-            isActive={index === activeIndex}
-            onClick={() => handleDishClick(dish, index)}
-          />
-        ))}
+        {dishes.map((dish, dishIndex) => {
+          const relativeIndex = (dishIndex - activeIndex + dishes.length) % dishes.length;
+          
+          return (
+            <DishCard
+              key={dish.id}
+              dish={dish}
+              index={relativeIndex}
+              isActive={dishIndex === activeIndex}
+              onClick={() => handleDishClick(dish, dishIndex)}
+            />
+          );
+        })}
       </div>
 
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-2">
-        {dishes.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setActiveIndex(index)}
-            className={`h-2 rounded-full transition-all ${
-              index === activeIndex 
-                ? 'w-8 bg-white' 
-                : 'w-2 bg-white/40'
-            }`}
-          />
-        ))}
+      <div className="absolute bottom-6 sm:bottom-8 md:bottom-10 left-0 right-0 flex justify-center items-center gap-1.5 sm:gap-2 safe-bottom px-4">
+        <div className="flex gap-1.5 sm:gap-2 overflow-x-auto max-w-full scrollbar-hide px-2">
+          {dishes.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveIndex(index)}
+              className={`h-1.5 sm:h-2 rounded-full transition-all flex-shrink-0 ${
+                index === activeIndex 
+                  ? 'w-6 sm:w-8 bg-white' 
+                  : 'w-1.5 sm:w-2 bg-white/40'
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
