@@ -52,12 +52,13 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
   );
 }
 
-function DonutRing({ category, position, isSelected, onClick, isMobile }: { 
+function DonutRing({ category, position, isSelected, onClick, isMobile, totalCategories }: { 
   category: Category; 
   position: [number, number, number];
   isSelected: boolean;
   onClick: () => void;
   isMobile: boolean;
+  totalCategories: number;
 }) {
   const ringRef = useRef<THREE.Mesh>(null);
   const circleRef = useRef<THREE.Mesh>(null);
@@ -159,49 +160,40 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: 
   isMobile: boolean;
   categories: Category[];
 }) {
+  const [rotation, setRotation] = useState(0);
+  const groupRef = useRef<THREE.Group>(null);
+
   const positions = useMemo(() => {
     const count = categories.length;
+    const radius = isMobile ? 8 : 10;
+    const angleStep = (Math.PI * 0.6) / Math.max(count - 1, 1);
+    const startAngle = -Math.PI * 0.3;
     
-    const baseSpacing = isMobile ? 2.6 : 2.8;
-    const spacing = count <= 3 ? baseSpacing * 1.1 : count === 4 ? baseSpacing : baseSpacing * 0.9;
-    
-    if (count <= 4) {
-      const totalWidth = (count - 1) * spacing;
-      return categories.map((_, index) => {
-        const x = index * spacing - totalWidth / 2;
-        return [x, 0, 0] as [number, number, number];
-      });
-    } else if (count <= 6) {
-      const itemsPerRow = 3;
-      const rows = Math.ceil(count / itemsPerRow);
+    return categories.map((_, index) => {
+      const angle = startAngle + index * angleStep;
+      const x = Math.sin(angle) * radius;
+      const z = Math.cos(angle) * radius - radius;
+      const y = 0;
       
-      return categories.map((_, index) => {
-        const row = Math.floor(index / itemsPerRow);
-        const col = index % itemsPerRow;
-        const itemsInRow = Math.min(itemsPerRow, count - row * itemsPerRow);
-        
-        const x = col * spacing - (itemsInRow - 1) * spacing / 2;
-        const y = (rows - 1) * spacing / 2 - row * spacing;
-        
-        return [x, y, 0] as [number, number, number];
-      });
-    } else {
-      const itemsPerRow = Math.min(4, Math.ceil(Math.sqrt(count)));
-      const rows = Math.ceil(count / itemsPerRow);
-      const gridSpacing = spacing * 0.85;
-      
-      return categories.map((_, index) => {
-        const row = Math.floor(index / itemsPerRow);
-        const col = index % itemsPerRow;
-        const itemsInRow = Math.min(itemsPerRow, count - row * itemsPerRow);
-        
-        const x = col * gridSpacing - (itemsInRow - 1) * gridSpacing / 2;
-        const y = (rows - 1) * gridSpacing / 2 - row * gridSpacing;
-        
-        return [x, y, 0] as [number, number, number];
-      });
-    }
+      return [x, y, z] as [number, number, number];
+    });
   }, [categories.length, isMobile]);
+
+  useFrame(() => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = rotation;
+    }
+  });
+
+  const handleRotateLeft = () => {
+    setRotation(prev => prev + Math.PI / 12);
+    onVibrate();
+  };
+
+  const handleRotateRight = () => {
+    setRotation(prev => prev - Math.PI / 12);
+    onVibrate();
+  };
 
   return (
     <>
@@ -211,19 +203,22 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: 
       <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
       <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} />
       
-      {categories.map((category, index) => (
-        <DonutRing
-          key={category.id}
-          category={category}
-          position={positions[index]}
-          isSelected={selectedCategory?.id === category.id}
-          onClick={() => {
-            onVibrate();
-            onSelect(category);
-          }}
-          isMobile={isMobile}
-        />
-      ))}
+      <group ref={groupRef}>
+        {categories.map((category, index) => (
+          <DonutRing
+            key={category.id}
+            category={category}
+            position={positions[index]}
+            isSelected={selectedCategory?.id === category.id}
+            onClick={() => {
+              onVibrate();
+              onSelect(category);
+            }}
+            isMobile={isMobile}
+            totalCategories={categories.length}
+          />
+        ))}
+      </group>
       
       <OrbitControls 
         enableZoom={false} 
@@ -232,6 +227,8 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: 
         minPolarAngle={Math.PI / 2}
         enableDamping
         dampingFactor={0.05}
+        enableRotate={true}
+        rotateSpeed={0.5}
       />
     </>
   );
@@ -247,25 +244,11 @@ export function CategoryRingsScreen() {
   const categories = defaultCategories;
 
   const cameraConfig = useMemo(() => {
-    const count = categories.length;
-    
-    if (count <= 4) {
-      return {
-        position: [0, 0, isMobile ? 11 : 9] as [number, number, number],
-        fov: isMobile ? 50 : 45
-      };
-    } else if (count <= 9) {
-      return {
-        position: [0, 0, isMobile ? 14 : 12] as [number, number, number],
-        fov: isMobile ? 55 : 50
-      };
-    } else {
-      return {
-        position: [0, 0, isMobile ? 18 : 15] as [number, number, number],
-        fov: isMobile ? 60 : 55
-      };
-    }
-  }, [categories.length, isMobile]);
+    return {
+      position: [0, 0, isMobile ? 12 : 10] as [number, number, number],
+      fov: isMobile ? 55 : 50
+    };
+  }, [isMobile]);
 
   const handleSelect = (category: Category) => {
     if (isTransitioning) return;
@@ -309,12 +292,12 @@ export function CategoryRingsScreen() {
       </div>
       
       <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end safe-bottom pb-6 sm:pb-10 md:pb-14 pointer-events-none px-2 sm:px-4">
-        <div className="w-full max-w-6xl overflow-x-auto scrollbar-hide">
-          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 justify-center min-w-min px-2">
+        <div className="w-full max-w-6xl overflow-x-auto scrollbar-hide pointer-events-auto">
+          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-start min-w-min px-2 pb-2">
             {categories.map((category) => (
               <motion.div
                 key={category.id}
-                className="text-center flex-shrink-0"
+                className="text-center flex-shrink-0 pointer-events-auto cursor-pointer"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ 
                   opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
@@ -322,8 +305,9 @@ export function CategoryRingsScreen() {
                   scale: selectedCat?.id === category.id ? 1.1 : 1
                 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
+                onClick={() => handleSelect(category)}
               >
-                <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
                   <p className="text-white text-xs sm:text-sm md:text-base font-semibold tracking-wide whitespace-nowrap">
                     {category.emoji} {category.name}
                   </p>

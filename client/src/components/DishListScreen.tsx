@@ -17,7 +17,7 @@ function DishCard({ dish, index, isActive, onClick }: {
   const rotation = isActive ? 0 : Math.min(index * 2, maxRotation);
   const yOffset = isActive ? 0 : Math.min(index * 20, maxOffset);
   const scale = isActive ? 1 : Math.max(0.85, 0.9 - (index * 0.03));
-  const zIndex = isActive ? 10 : Math.max(0, 5 - index);
+  const zIndex = isActive ? 1000 : Math.max(0, 999 - index);
   const opacity = isActive ? 1 : index < 3 ? 0.95 - (index * 0.15) : 0.5;
 
   return (
@@ -192,6 +192,8 @@ export function DishListScreen() {
       <div className="relative h-full">
         {dishes.map((dish, dishIndex) => {
           const relativeIndex = (dishIndex - activeIndex + dishes.length) % dishes.length;
+          
+          if (relativeIndex > 5) return null;
           
           return (
             <DishCard
