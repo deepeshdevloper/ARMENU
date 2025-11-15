@@ -1,5 +1,5 @@
-import { XR, Controllers, Hands, XRButton, useHitTest, useXR } from "@react-three/xr";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { XR, createXRStore } from "@react-three/xr";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,38 +7,26 @@ import * as THREE from "three";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { ChevronLeft, RotateCw, Maximize2 } from "lucide-react";
 
-function Reticle({ color, isStable }: { color: string; isStable: boolean }) {
+const xrStore = createXRStore();
+
+function Reticle({ color }: { color: string }) {
   const reticleRef = useRef<THREE.Group>(null);
-  const { isPresenting } = useXR();
-  
-  useHitTest((hitMatrix) => {
-    if (reticleRef.current) {
-      hitMatrix.decompose(
-        reticleRef.current.position,
-        reticleRef.current.quaternion,
-        reticleRef.current.scale
-      );
-      reticleRef.current.visible = true;
-    }
-  });
 
   useFrame((state) => {
-    if (reticleRef.current && isStable) {
+    if (reticleRef.current) {
       const scale = 1 + Math.sin(state.clock.elapsedTime * 3) * 0.1;
       reticleRef.current.scale.setScalar(scale * 0.5);
     }
   });
 
-  if (!isPresenting) return null;
-
   return (
-    <group ref={reticleRef} visible={false}>
+    <group ref={reticleRef} position={[0, 0, -2]}>
       <mesh rotation-x={-Math.PI / 2}>
         <ringGeometry args={[0.1, 0.12, 32]} />
         <meshBasicMaterial 
           color={color} 
           transparent 
-          opacity={isStable ? 0.8 : 0.4}
+          opacity={0.8}
         />
       </mesh>
       <mesh rotation-x={-Math.PI / 2}>
@@ -49,92 +37,37 @@ function Reticle({ color, isStable }: { color: string; isStable: boolean }) {
   );
 }
 
-function ARDishModel({ modelPath, color, onPlaced }: { 
+function ARDishModel({ modelPath, color }: { 
   modelPath: string; 
   color: string;
-  onPlaced: (position: THREE.Vector3) => void;
 }) {
-  const { scene: gltfModel } = useGLTF(modelPath);
-  const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const modelRef = useRef<THREE.Group>(null);
+  const gltf = useGLTF(modelPath);
   const clonedModel = useRef<THREE.Group | null>(null);
-  const { isPresenting } = useXR();
+  const modelRef = useRef<THREE.Group>(null);
 
   useEffect(() => {
-    if (gltfModel && !clonedModel.current) {
-      clonedModel.current = gltfModel.clone();
-      clonedModel.current.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
+    const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
+    if (scene && !clonedModel.current) {
+      clonedModel.current = scene.clone();
+      if (clonedModel.current) {
+        clonedModel.current.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+      }
     }
-  }, [gltfModel]);
-
-  useHitTest((hitMatrix) => {
-    if (clonedModel.current && modelRef.current && isPresenting) {
-      const position = new THREE.Vector3();
-      hitMatrix.decompose(position, new THREE.Quaternion(), new THREE.Vector3());
-      modelRef.current.position.copy(position);
-      modelRef.current.position.y += 0.05;
-    }
-  });
+  }, [gltf]);
 
   useFrame(() => {
     if (modelRef.current) {
-      modelRef.current.rotation.y = rotation;
-      modelRef.current.scale.setScalar(scale * 2.5);
+      modelRef.current.rotation.y += 0.005;
     }
   });
 
-  useEffect(() => {
-    const handleTouch = (e: TouchEvent) => {
-      if (e.touches.length === 2 && modelRef.current) {
-        e.preventDefault();
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        
-        const distance = Math.hypot(
-          touch2.clientX - touch1.clientX,
-          touch2.clientY - touch1.clientY
-        );
-        
-        const prevDistance = (window as any)._prevDistance || distance;
-        const scaleChange = distance / prevDistance;
-        
-        setScale(prev => Math.max(0.5, Math.min(2.0, prev * scaleChange)));
-        (window as any)._prevDistance = distance;
-        
-        const angle = Math.atan2(
-          touch2.clientY - touch1.clientY,
-          touch2.clientX - touch1.clientX
-        );
-        const prevAngle = (window as any)._prevAngle || angle;
-        const rotationChange = angle - prevAngle;
-        
-        setRotation(prev => prev + rotationChange);
-        (window as any)._prevAngle = angle;
-      }
-    };
-
-    const handleTouchEnd = () => {
-      delete (window as any)._prevDistance;
-      delete (window as any)._prevAngle;
-    };
-
-    window.addEventListener('touchmove', handleTouch, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('touchmove', handleTouch);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
-
   return (
-    <group ref={modelRef}>
+    <group ref={modelRef} position={[0, 0, -1.5]} scale={2.5}>
       {clonedModel.current && (
         <primitive object={clonedModel.current} />
       )}
@@ -144,17 +77,6 @@ function ARDishModel({ modelPath, color, onPlaced }: {
 }
 
 function ARScene({ dish }: { dish: any }) {
-  const [modelPlaced, setModelPlaced] = useState(false);
-  const [hitTestStable, setHitTestStable] = useState(false);
-  const [noSurfaceTimer, setNoSurfaceTimer] = useState(0);
-  const { isPresenting } = useXR();
-
-  useFrame((state, delta) => {
-    if (isPresenting && !hitTestStable) {
-      setNoSurfaceTimer(prev => prev + delta);
-    }
-  });
-
   const color = dish.emoji === '🔥' ? '#EF4444' : 
                 dish.emoji === '🍫' ? '#F9A8D4' :
                 dish.emoji === '🍹' ? '#67E8F9' : '#6EE7B7';
@@ -162,28 +84,20 @@ function ARScene({ dish }: { dish: any }) {
   return (
     <>
       <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
+      <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
+      <pointLight position={[-5, 3, -5]} intensity={0.3} />
       
-      {!modelPlaced && (
-        <Reticle color={color} isStable={hitTestStable} />
-      )}
-      
-      {modelPlaced && (
-        <ARDishModel 
-          modelPath={dish.modelPath} 
-          color={color}
-          onPlaced={(pos) => console.log('Model placed at:', pos)}
-        />
-      )}
-      
-      <Controllers />
-      <Hands />
+      <Reticle color={color} />
+      <ARDishModel 
+        modelPath={dish.modelPath} 
+        color={color}
+      />
     </>
   );
 }
 
 function FallbackViewer({ dish }: { dish: any }) {
-  const { scene: gltfModel } = useGLTF(dish.modelPath);
+  const gltf = useGLTF(dish.modelPath);
   const clonedModel = useRef<THREE.Group | null>(null);
   
   const color = dish.emoji === '🔥' ? '#EF4444' : 
@@ -191,16 +105,19 @@ function FallbackViewer({ dish }: { dish: any }) {
                 dish.emoji === '🍹' ? '#67E8F9' : '#6EE7B7';
 
   useEffect(() => {
-    if (gltfModel && !clonedModel.current) {
-      clonedModel.current = gltfModel.clone();
-      clonedModel.current.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
+    const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
+    if (scene && !clonedModel.current) {
+      clonedModel.current = scene.clone();
+      if (clonedModel.current) {
+        clonedModel.current.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+      }
     }
-  }, [gltfModel]);
+  }, [gltf]);
 
   return (
     <>
@@ -328,11 +245,9 @@ export function ARScreen() {
 
       {isARSupported ? (
         <>
-          <XRButton
-            mode="AR"
-            sessionInit={{
-              requiredFeatures: ['hit-test', 'dom-overlay'],
-              domOverlay: { root: document.body }
+          <button
+            onClick={() => {
+              xrStore.enterAR();
             }}
             style={{
               position: 'absolute',
@@ -351,10 +266,10 @@ export function ARScreen() {
             }}
           >
             Start AR Experience
-          </XRButton>
+          </button>
 
           <Canvas>
-            <XR>
+            <XR store={xrStore}>
               <Suspense fallback={null}>
                 <ARScene dish={selectedDish} />
               </Suspense>
