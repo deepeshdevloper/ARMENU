@@ -54,25 +54,38 @@ function ARDishModel({ modelPath, color, onPlaced }: {
   color: string;
   onPlaced: (position: THREE.Vector3) => void;
 }) {
-  const [model, setModel] = useState<THREE.Group | null>(null);
+  const { scene: gltfModel } = useGLTF(modelPath);
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const modelRef = useRef<THREE.Group>(null);
+  const clonedModel = useRef<THREE.Group | null>(null);
   const { isPresenting } = useXR();
 
+  useEffect(() => {
+    if (gltfModel && !clonedModel.current) {
+      clonedModel.current = gltfModel.clone();
+      clonedModel.current.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [gltfModel]);
+
   useHitTest((hitMatrix) => {
-    if (model && modelRef.current && isPresenting) {
+    if (clonedModel.current && modelRef.current && isPresenting) {
       const position = new THREE.Vector3();
       hitMatrix.decompose(position, new THREE.Quaternion(), new THREE.Vector3());
       modelRef.current.position.copy(position);
-      modelRef.current.position.y += 0.1;
+      modelRef.current.position.y += 0.05;
     }
   });
 
   useFrame(() => {
     if (modelRef.current) {
       modelRef.current.rotation.y = rotation;
-      modelRef.current.scale.setScalar(scale * 0.5);
+      modelRef.current.scale.setScalar(scale * 2.5);
     }
   });
 
@@ -122,15 +135,10 @@ function ARDishModel({ modelPath, color, onPlaced }: {
 
   return (
     <group ref={modelRef}>
-      <mesh>
-        <boxGeometry args={[0.3, 0.3, 0.3]} />
-        <meshStandardMaterial 
-          color={color} 
-          emissive={color}
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-      <pointLight color={color} intensity={0.5} distance={2} />
+      {clonedModel.current && (
+        <primitive object={clonedModel.current} />
+      )}
+      <pointLight color={color} intensity={0.8} distance={3} />
     </group>
   );
 }
@@ -175,26 +183,35 @@ function ARScene({ dish }: { dish: any }) {
 }
 
 function FallbackViewer({ dish }: { dish: any }) {
+  const { scene: gltfModel } = useGLTF(dish.modelPath);
+  const clonedModel = useRef<THREE.Group | null>(null);
+  
   const color = dish.emoji === '🔥' ? '#EF4444' : 
                 dish.emoji === '🍫' ? '#F9A8D4' :
                 dish.emoji === '🍹' ? '#67E8F9' : '#6EE7B7';
 
+  useEffect(() => {
+    if (gltfModel && !clonedModel.current) {
+      clonedModel.current = gltfModel.clone();
+      clonedModel.current.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+  }, [gltfModel]);
+
   return (
     <>
       <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
+      <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
       <pointLight position={[-5, 5, -5]} intensity={0.5} />
+      <spotLight position={[0, 5, 0]} intensity={0.5} color={color} />
       
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial 
-          color={color} 
-          emissive={color}
-          emissiveIntensity={0.3}
-          roughness={0.3}
-          metalness={0.7}
-        />
-      </mesh>
+      {clonedModel.current && (
+        <primitive object={clonedModel.current} scale={2.5} />
+      )}
       
       <OrbitControls enableZoom={true} enablePan={false} />
     </>
