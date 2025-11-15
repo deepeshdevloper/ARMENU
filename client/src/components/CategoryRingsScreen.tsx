@@ -1,19 +1,41 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Text } from "@react-three/drei";
 import { Suspense, useRef, useState, useMemo, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { categories as defaultCategories } from "@/data/menuData";
 import { useARMenu, Category } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const categoryModelMap: Record<string, string> = {
   spicy: "/models/burger.glb",
   dessert: "/models/cake.glb",
   drinks: "/models/cocktail.glb",
-  veg: "/models/salad.glb"
+  veg: "/models/salad.glb",
+  breakfast: "/models/chicken.glb",
+  italian: "/models/spaghetti.glb",
+  asian: "/models/ramen.glb",
+  mexican: "/models/tacos.glb",
+  american: "/models/burger.glb",
+  mediterranean: "/models/gyro.glb",
+  seafood: "/models/burger.glb",
+  grill: "/models/steak.glb",
+  pasta: "/models/spaghetti.glb",
+  sandwiches: "/models/sandwich.glb",
+  soups: "/models/soup.glb",
+  appetizers: "/models/tacos.glb",
+  bbq: "/models/steak.glb",
+  sushi: "/models/sushi.glb",
+  indian: "/models/burger.glb",
+  chinese: "/models/ramen.glb",
+  japanese: "/models/sushi.glb",
+  french: "/models/cake.glb",
+  greek: "/models/gyro.glb",
+  thai: "/models/ramen.glb",
+  korean: "/models/burger.glb"
 };
 
 function DishModel({ modelPath, isHovered, isSelected, isMobile }: { 
@@ -43,7 +65,7 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
 
   const clonedScene = useMemo(() => scene.clone(), [scene]);
   
-  const modelScale = isMobile ? 0.8 : 1.0;
+  const modelScale = isMobile ? 1.4 : 1.8;
   
   return (
     <group ref={modelRef} scale={modelScale}>
@@ -91,8 +113,8 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
   const opacity = isSelected ? 1 : isHovered ? 1 : 0.85;
   const modelPath = categoryModelMap[category.id];
   
-  const ringSize = isMobile ? 1.2 : 1.4;
-  const ringThickness = isMobile ? 0.1 : 0.12;
+  const ringSize = isMobile ? 1.8 : 2.2;
+  const ringThickness = isMobile ? 0.15 : 0.18;
 
   return (
     <group 
@@ -153,26 +175,23 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
   );
 }
 
-function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: { 
+function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, carouselOffset }: { 
   selectedCategory: Category | null; 
   onSelect: (cat: Category) => void;
   onVibrate: () => void;
   isMobile: boolean;
   categories: Category[];
+  carouselOffset: number;
 }) {
-  const [rotation, setRotation] = useState(0);
   const groupRef = useRef<THREE.Group>(null);
 
   const positions = useMemo(() => {
-    const count = categories.length;
-    const radius = isMobile ? 8 : 10;
-    const angleStep = (Math.PI * 0.6) / Math.max(count - 1, 1);
-    const startAngle = -Math.PI * 0.3;
+    const spacing = isMobile ? 4.2 : 5.0;
+    const startX = -spacing * 2.5;
     
     return categories.map((_, index) => {
-      const angle = startAngle + index * angleStep;
-      const x = Math.sin(angle) * radius;
-      const z = Math.cos(angle) * radius - radius;
+      const x = startX + index * spacing;
+      const z = -8;
       const y = 0;
       
       return [x, y, z] as [number, number, number];
@@ -181,19 +200,11 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: 
 
   useFrame(() => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = rotation;
+      const spacing = isMobile ? 4.2 : 5.0;
+      const targetX = -carouselOffset * spacing * 6;
+      groupRef.current.position.x += (targetX - groupRef.current.position.x) * 0.1;
     }
   });
-
-  const handleRotateLeft = () => {
-    setRotation(prev => prev + Math.PI / 12);
-    onVibrate();
-  };
-
-  const handleRotateRight = () => {
-    setRotation(prev => prev - Math.PI / 12);
-    onVibrate();
-  };
 
   return (
     <>
@@ -227,7 +238,7 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories }: 
         minPolarAngle={Math.PI / 2}
         enableDamping
         dampingFactor={0.05}
-        enableRotate={true}
+        enableRotate={false}
         rotateSpeed={0.5}
       />
     </>
@@ -238,15 +249,18 @@ export function CategoryRingsScreen() {
   const selectCategory = useARMenu(state => state.selectCategory);
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [carouselPage, setCarouselPage] = useState(0);
   const { trigger } = useHaptics();
   const isMobile = useIsMobile();
 
   const categories = defaultCategories;
+  const RINGS_PER_PAGE = 6;
+  const totalPages = Math.ceil(categories.length / RINGS_PER_PAGE);
 
   const cameraConfig = useMemo(() => {
     return {
-      position: [0, 0, isMobile ? 12 : 10] as [number, number, number],
-      fov: isMobile ? 55 : 50
+      position: [0, 0, isMobile ? 14 : 12] as [number, number, number],
+      fov: isMobile ? 65 : 60
     };
   }, [isMobile]);
 
@@ -267,6 +281,29 @@ export function CategoryRingsScreen() {
     trigger('light');
   };
 
+  const handleNextPage = () => {
+    if (carouselPage < totalPages - 1) {
+      setCarouselPage(prev => prev + 1);
+      trigger('light');
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (carouselPage > 0) {
+      setCarouselPage(prev => prev - 1);
+      trigger('light');
+    }
+  };
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold && carouselPage < totalPages - 1) {
+      handleNextPage();
+    } else if (info.offset.x > threshold && carouselPage > 0) {
+      handlePrevPage();
+    }
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden">
       <div 
@@ -277,7 +314,13 @@ export function CategoryRingsScreen() {
         }}
       />
       
-      <div className="absolute inset-0">
+      <motion.div 
+        className="absolute inset-0"
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+      >
         <Canvas camera={{ position: cameraConfig.position, fov: cameraConfig.fov }}>
           <Suspense fallback={null}>
             <Scene 
@@ -286,34 +329,78 @@ export function CategoryRingsScreen() {
               onVibrate={handleVibrate}
               isMobile={isMobile}
               categories={categories}
+              carouselOffset={carouselPage}
             />
           </Suspense>
         </Canvas>
-      </div>
+      </motion.div>
       
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-end safe-bottom pb-6 sm:pb-10 md:pb-14 pointer-events-none px-2 sm:px-4">
+      {carouselPage > 0 && (
+        <motion.button
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
+          onClick={handlePrevPage}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+        >
+          <ChevronLeft size={24} />
+        </motion.button>
+      )}
+      
+      {carouselPage < totalPages - 1 && (
+        <motion.button
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
+          onClick={handleNextPage}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+        >
+          <ChevronRight size={24} />
+        </motion.button>
+      )}
+      
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center safe-bottom pb-6 sm:pb-10 md:pb-14 pointer-events-none px-2 sm:px-4 gap-4">
+        <div className="flex gap-2 pointer-events-auto">
+          {Array.from({ length: totalPages }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setCarouselPage(index);
+                trigger('light');
+              }}
+              className={`h-2 rounded-full transition-all ${
+                index === carouselPage 
+                  ? 'w-8 bg-white' 
+                  : 'w-2 bg-white/40 hover:bg-white/60'
+              }`}
+            />
+          ))}
+        </div>
+        
         <div className="w-full max-w-6xl overflow-x-auto scrollbar-hide pointer-events-auto">
-          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-start min-w-min px-2 pb-2">
-            {categories.map((category) => (
-              <motion.div
-                key={category.id}
-                className="text-center flex-shrink-0 pointer-events-auto cursor-pointer"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
-                  y: 0,
-                  scale: selectedCat?.id === category.id ? 1.1 : 1
-                }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                onClick={() => handleSelect(category)}
-              >
-                <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
-                  <p className="text-white text-xs sm:text-sm md:text-base font-semibold tracking-wide whitespace-nowrap">
-                    {category.emoji} {category.name}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center min-w-min px-2 pb-2">
+            {categories
+              .slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)
+              .map((category) => (
+                <motion.div
+                  key={category.id}
+                  className="text-center flex-shrink-0 pointer-events-auto cursor-pointer"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
+                    y: 0,
+                    scale: selectedCat?.id === category.id ? 1.1 : 1
+                  }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  onClick={() => handleSelect(category)}
+                >
+                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
+                    <p className="text-white text-xs sm:text-sm md:text-base font-semibold tracking-wide whitespace-nowrap">
+                      {category.emoji} {category.name}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
           </div>
         </div>
       </div>
@@ -339,7 +426,9 @@ export function CategoryRingsScreen() {
             <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1">
               👋 Welcome to AR Menu
             </h1>
-            <p className="text-white/70 text-xs sm:text-sm">Tap a ring to explore delicious dishes</p>
+            <p className="text-white/70 text-xs sm:text-sm">
+              Swipe or use arrows to browse • Tap a ring to explore
+            </p>
           </div>
         </motion.div>
       </motion.div>
