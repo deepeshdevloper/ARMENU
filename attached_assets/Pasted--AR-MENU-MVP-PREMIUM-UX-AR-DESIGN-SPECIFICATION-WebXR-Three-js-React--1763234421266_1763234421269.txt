@@ -1,0 +1,479 @@
+---
+
+# ⭐ **AR MENU MVP — PREMIUM UX + AR DESIGN SPECIFICATION**
+
+### **WebXR + Three.js + React**
+
+### **QR → Lens Rings → Dish List → AR Dish Placement**
+
+---
+
+# 0. PRODUCT PURPOSE
+
+This MVP allows customers to scan a simple restaurant QR and instantly experience a **high-fidelity AR food preview**.
+The AR menu provides:
+
+* Hyper-visual, Snapchat-inspired category selection (Lens Rings).
+* Creative dish listing.
+* Zero-lag WebXR AR placement of food items on a detected table.
+* Strict rule: **No horizontal surface = No AR dish model.**
+* Premium Gen-Z friendly interface with micro-animations and neon effects.
+
+No payments.
+No user accounts.
+No restaurant admin panel.
+Only scanning, viewing categories, choosing a dish, and placing it in AR.
+
+---
+
+# 1. END-TO-END USER FLOW OVERVIEW
+
+1. **User scans QR**
+2. **Welcome / Category Lens Rings Screen**
+3. **Select Category → Dish List Screen**
+4. **Select Dish → Dish Detail / View in AR**
+5. **AR Mode: Plane detection → Placement → Interaction**
+6. **Exit AR → Back to Dish Screen or Category Rings**
+
+Every stage has clear transitions, animations, and micro-interactions defined below.
+
+---
+
+# 2. SCREEN-BY-SCREEN SPECIFICATIONS
+
+## **2.1 QR Landing Screen (0.5 sec auto-transition)**
+
+### Purpose
+
+Immediately load menu configuration tied to the QR code.
+
+### Visual Layout
+
+* Fullscreen minimal loader
+* Smooth gradient background (subtle warm tones reflecting food theme)
+* Circular loading pulse that matches restaurant color identity
+* Message: **“Loading Menu…”**
+
+### Micro-Interactions
+
+* Loading pulse expands 2% every 300ms
+* If loading takes >2 seconds → add “Fetching AR models…” second line
+* Automatic transition to Category Lens Rings Screen
+
+### States
+
+* **Loading**
+* **Failed to load** → show “Unable to load menu. Check your network.”
+
+---
+
+## **2.2 Category Lens Rings Screen (Hero Screen)**
+
+### Purpose
+
+Provide food categories in an immersive Snapchat-style ring selector.
+
+---
+
+### Overall Feel
+
+This screen must feel **alive**, **interactive**, and **Gen-Z premium** — like TikTok filters or Snapchat Lens selection but adapted for food categories.
+
+---
+
+### Layout
+
+* Fullscreen
+* Centered horizontal carousel of floating **3D donut rings**
+* Each ring:
+
+  * 3D torus-like glowing donut
+  * Food preview model lightly spinning inside the donut opening
+  * Neon glow matching category theme:
+
+    * Spicy = electric crimson
+    * Dessert = pastel pink
+    * Drinks = aqua neon
+    * Veg = bright green
+* Category title under each ring (floating text with subtle parallax)
+
+---
+
+### Micro-Interactions
+
+#### **Idle animation**
+
+* Rings float up and down ±3px
+* Slow 360° rotation on Y-axis over 12 seconds
+* Subtle wobble every 4 seconds (organic, playful)
+
+#### **Hover / Tap animation** (mobile-first)
+
+* Ripple distortion emanates from the center like TikTok filters
+* Glow intensifies
+* Ring scale increases from 1.0 → 1.08 quickly
+* Food preview spins slightly faster for 1 second
+
+#### **Selection animation**
+
+* Selected ring expands to 1.2 scale
+* Non-selected rings fade to 40% opacity
+* Background blurs with depth-of-field effect
+* Screen transitions into Dish List with smooth upward slide
+
+---
+
+### States
+
+* **Normal (default)**
+* **Glowing (on hover)**
+* **Selected**
+* **Loading next screen**
+
+---
+
+## **2.3 Dish List Screen**
+
+### Purpose
+
+Show all dishes in the selected category in a unique, creative, appetizing layout.
+
+---
+
+### Layout
+
+Choose the most engaging pattern for a food experience:
+
+#### **Option A — Vertical “Stacked Cards” Carousel**
+
+* Each dish card is slightly rotated (like a deck of cards)
+* Foremost card is in focus, rest staggered behind
+* Swipe or scroll vertically to bring next card forward
+
+#### **Option B — Horizontal “Liquid Swipe” Cards**
+
+* Cards animate like liquid blobs transitioning into each other
+* Great for Gen-Z design
+
+#### **Option C — Elevated Parallax List**
+
+* Each card tilts based on phone tilt (gyroscope parallax)
+
+---
+
+### Dish Card Structure
+
+Each card contains:
+
+* Thumbnail image (high contrast)
+* Dish name (big, bold typography)
+* Short 1-line description
+* Emojis representing mood (🔥 spicy, 🍫 dessert, 🍋 tangy)
+* “View in AR” button
+* Micro shadows and neon elements matching category color
+
+---
+
+### Micro-Interactions
+
+* Cards slightly bounce upward on scroll end
+* “View in AR” button glows subtly
+* Thumbnail zooms 3% on hover
+* When selecting dish:
+
+  * Card expands
+  * Background slightly dims
+  * Transition to AR readiness screen
+
+---
+
+### States
+
+* **List Loaded**
+* **Dish Selected**
+* **Loading AR Assets**
+* **Back to Categories**
+
+---
+
+## **2.4 View Dish in AR — Pre-AR Screen**
+
+### Purpose
+
+Prepare user for AR mode before entering WebXR session.
+
+### Layout
+
+* Clean panel with dish name, calories, 1–2 photos
+* “Enter AR” button (prominent neon outline)
+* Warning text:
+  **“Point your camera at a flat table or plate. The 3D dish will only appear when a real surface is detected.”**
+
+### Micro-Interactions
+
+* Button gently pulses every 2 seconds
+* Photos slide slightly on tilt (parallax)
+
+---
+
+# 3. AR EXPERIENCE SPECIFICATION (CORE OF MVP)
+
+---
+
+## **3.1 Entering AR Mode**
+
+### Motion
+
+* Fade UI
+* Camera feed appears
+* Three.js renderer activates
+* Reticle appears only when hit-test finds a surface
+
+---
+
+## **3.2 Plane Detection Rules**
+
+This is the MOST important MVP rule:
+
+### **The dish model MUST NOT appear until a valid horizontal surface (table/plate) is detected.**
+
+### Conditions for “valid plane”:
+
+* Plane normal must be facing upward
+* Angle tolerance: max tilt ≤ 20°
+* Minimum hit-test stability:
+
+  * Hit-test must be consistent for 300–600ms
+* If no valid plane for 6 seconds → show “No Table” guidance screen
+
+---
+
+## **3.3 Reticle Design**
+
+* Circular thin glowing ring
+* Dot in center
+* Neon color matches dish category (consistent theme)
+* Pulses lightly when plane becomes stable
+* Reticle has two states:
+
+### **Reticle States**
+
+1. **Searching for surface (No plane)**
+
+   * Reticle hidden
+   * “Move your device slowly…” text appears
+
+2. **Valid plane found**
+
+   * Reticle visible
+   * Glow intensifies
+   * Small bounce animation indicating placement possible
+
+---
+
+## **3.4 Placement Interaction**
+
+### How placement works:
+
+* User taps anywhere while reticle is visible
+* Dish model spawns anchored to plane
+* Model scale applied smoothly from 0 → full scale (0.4 sec ease-out animation)
+* Info Overlay appears after placement
+
+---
+
+## **3.5 AR Dish Interaction Rules**
+
+### Scaling (Pinch Gesture)
+
+* Pinch in/out to shrink/grow
+* Limit scale to 0.5× → 2.0×
+
+### Rotation (Two-Finger Rotate)
+
+* Smooth rotation proportional to twist angle
+* Slight easing applied to make movement feel natural
+
+### Position Lock
+
+* Once placed, dish stays anchored
+* To move: user must remove & re-place (simple for MVP)
+
+---
+
+## **3.6 Info Overlay UI**
+
+Small floating panel at top or bottom:
+
+* Dish name
+* Calories
+* Ingredients
+* “Reposition Dish” button
+* “Exit AR” button
+
+Overlay automatically dims after 3 seconds of inactivity.
+
+---
+
+## **3.7 Exiting AR**
+
+* Fade out camera feed
+* Fade in Dish List screen
+* Dispose AR session gracefully
+
+---
+
+# 4. FAILURE + EDGE CASE UX
+
+---
+
+## **4.1 No Table Detected State**
+
+After 6 seconds of scanning:
+
+### UI
+
+* Modal overlay
+* Animated illustration showing phone scanning table
+* Instructions:
+  **“We couldn’t find a flat surface. Move your camera slowly or try pointing at a well-lit table.”**
+
+### Buttons
+
+* Retry AR
+* Back to Dish screen
+
+---
+
+## **4.2 Low Light Warning**
+
+If surface contrast is insufficient:
+
+* Non-intrusive toast:
+  **"More lighting may help detect surfaces."**
+
+---
+
+## **4.3 Device Unsupported**
+
+If WebXR is not available:
+
+* Show 3D interactive viewer instead (orbit controls)
+* Explain:
+  **“Your device does not support AR. Showing 3D view instead.”**
+
+---
+
+# 5. VISUAL DESIGN SYSTEM
+
+---
+
+## **5.1 Color Style**
+
+Primary colors match food moods.
+
+* Spicy → Red
+* Dessert → Pink
+* Drinks → Aqua
+* Veg → Green
+* Gravy Items → Orange
+* Premium Items → Gold
+
+---
+
+## **5.2 Typography**
+
+* Headings: Bold, wide spacing, modern feel
+* Body text: Rounded, friendly, mobile-optimized
+* Buttons: Rounded edges, neon outer glow
+
+---
+
+## **5.3 Motion Guidelines**
+
+* Transitions never exceed 500ms
+* Always ease-out or cubic-bezier for premium feel
+* Avoid sharp mechanical animations
+* Everything must feel like “liquid flow” and “neon glow”
+
+---
+
+## **5.4 Haptics (Mobile)**
+
+* Light vibration on ring tap
+* Stronger tap when model is placed in AR
+
+---
+
+# 6. PERFORMANCE GUIDELINES
+
+---
+
+## **6.1 AR Performance**
+
+* Models optimally < 5 MB
+* Use compressed glTF
+* Texture resolution minimal to avoid lag
+* Keep shadows simple or baked
+* Keep materials PBR but lightweight
+
+---
+
+## **6.2 Loading Optimization**
+
+* Preload low-res model preview
+* Load full model only when entering AR
+
+---
+
+# 7. PRIVACY + PERMISSIONS
+
+---
+
+## **7.1 Permissions Modal**
+
+Before AR:
+
+* “We only use your camera for AR surface detection. No footage is stored.”
+
+---
+
+# 8. OUTCOMES EXPECTED FROM MVP
+
+* User can scan QR in restaurant and instantly browse categories
+* User experiences premium Lens Ring UI
+* User selects a dish
+* User enters AR mode
+* AR detects table surface
+* User places 3D dish on table
+* User views details and interacts with dish
+* No extra features (payments, checkout, admin, etc.)
+
+---
+
+# 9. WHAT MAKES THIS MVP “PREMIUM”?
+
+* Snapchat-style floating Lens Rings
+* Neon / holographic theme
+* Smooth transitions
+* Zero-lag AR
+* Clean UX flows
+* Strict surface placement rules
+* Creative, Gen-Z friendly aesthetics
+* Micro-interactions everywhere
+* Lightweight and elegant AR behavior
+
+---
+
+# 10. COMPLETE SUMMARY (EXECUTIVE LEVEL)
+
+This AR Menu MVP delivers:
+
+* A QR-based, device-friendly, zero-login AR food experience
+* Modern Gen-Z design language
+* Fully defined UI and AR rules
+* Detailed flows and interactions
+* Production-grade UX specification
+* Perfect foundation for future restaurant integration
+
+

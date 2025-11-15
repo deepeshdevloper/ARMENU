@@ -460,7 +460,7 @@ export function ARScreen() {
             </p>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
