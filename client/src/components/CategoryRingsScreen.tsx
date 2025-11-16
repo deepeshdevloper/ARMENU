@@ -9,16 +9,14 @@ import { useARMenu, Category } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import menuJson from "@/data/menu.json";
 
-const categoryModelMap: Record<string, string> = {
-  starters: "/models/samosa.glb",
-  veg: "/models/palak_paneer.glb",
-  nonveg: "/models/butter_chicken.glb",
-  breads: "/models/naan.glb",
-  rice: "/models/biryani.glb",
-  desserts: "/models/gulab_jamun.glb",
-  beverages: "/models/lassi.glb"
-};
+const categoryModelMap: Record<string, string> = menuJson.categories.reduce((acc: any, cat: any) => {
+  if (cat.model) {
+    acc[cat.id] = cat.model;
+  }
+  return acc;
+}, {});
 
 function DishModel({ modelPath, isHovered, isSelected, isMobile }: { 
   modelPath: string | undefined; 

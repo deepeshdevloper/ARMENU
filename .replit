@@ -4,6 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "openjpeg", "poppler", "poppler_utils", "tcl", "tesseract", "tk", "zlib"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -13,10 +14,6 @@ run = ["npm", "run", "start"]
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33575
-externalPort = 3000
 
 [workflows]
 runButton = "Project"

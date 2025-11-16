@@ -1,0 +1,225 @@
+{
+  "categories": [
+    {
+      "id": "paneer",
+      "name": "Paneer Dishes",
+      "description": "Delicious cottage cheese preparations",
+      "image": "/stock_images/indian_cottage_chees_24fc1ffb.jpg",
+      "model": "/models/categories/paneer.glb",
+      "dishes": [
+        { "id": "paneer-korma", "name": "Paneer Korma", "price": 165, "image": "", "model": "" },
+        { "id": "shahi-paneer", "name": "Shahi Paneer", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-masala", "name": "Paneer Masala", "price": 165, "image": "", "model": "" },
+        { "id": "kadhai-paneer", "name": "Kadhai Paneer", "price": 185, "image": "/stock_images/kadhai_paneer_indian_5676dbae.jpg", "model": "/models/dishes/kadhai-paneer.glb" },
+        { "id": "handi-paneer", "name": "Handi Paneer", "price": 185, "image": "", "model": "" },
+        { "id": "paneer-kasuri", "name": "Paneer Kasuri", "price": 185, "image": "", "model": "" },
+        { "id": "paneer-hyderabadi", "name": "Paneer Hyderabadi", "price": 185, "image": "", "model": "" },
+        { "id": "butter-paneer-masala", "name": "Butter Paneer Masala", "price": 185, "image": "/stock_images/butter_paneer_masala_a023906f.jpg", "model": "/models/dishes/butter-paneer-masala.glb" },
+        { "id": "paneer-pasanda", "name": "Paneer Pasanda", "price": 185, "image": "", "model": "" },
+        { "id": "paneer-bhurjee", "name": "Paneer Bhurjee", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-chatpata", "name": "Paneer Chatpata", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-achari", "name": "Paneer Achari", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-rara", "name": "Paneer Rara", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-makhanwala", "name": "Paneer Makhanwala", "price": 180, "image": "", "model": "" },
+        { "id": "paneer-punjabi", "name": "Paneer Punjabi", "price": 180, "image": "", "model": "" },
+        { "id": "paneer-do-pyaza", "name": "Paneer Do-Pyaza", "price": 185, "image": "", "model": "" },
+        { "id": "paneer-namkeen", "name": "Paneer Namkeen", "price": 185, "image": "", "model": "" },
+        { "id": "paneer-rezala", "name": "Paneer Rezala", "price": 185, "image": "", "model": "" },
+        { "id": "mutter-paneer", "name": "Mutter Paneer", "price": 90, "image": "", "model": "" },
+        { "id": "palak-paneer", "name": "Palak Paneer", "price": 90, "image": "/stock_images/palak_paneer_indian__a5ed3bc3.jpg", "model": "/models/dishes/palak-paneer.glb" },
+        { "id": "chana-paneer", "name": "Chana Paneer", "price": 90, "image": "", "model": "" },
+        { "id": "paneer-jalfrezi", "name": "Paneer Jalfrezi", "price": 165, "image": "", "model": "" },
+        { "id": "chilli-paneer", "name": "Chilli Paneer", "price": 165, "image": "", "model": "" },
+        { "id": "paneer-65", "name": "Paneer 65", "price": 165, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "kofta",
+      "name": "Kofta Dishes",
+      "description": "Vegetable dumplings in rich gravies",
+      "image": "/stock_images/indian_malai_kofta_v_2a4c36e2.jpg",
+      "model": "/models/categories/kofta.glb",
+      "dishes": [
+        { "id": "hariyali-kofta", "name": "Hariyali Kofta", "price": 160, "image": "", "model": "" },
+        { "id": "veg-kofta", "name": "Veg Kofta", "price": 160, "image": "", "model": "" },
+        { "id": "malai-kofta", "name": "Malai Kofta", "price": 160, "image": "/stock_images/malai_kofta_indian_v_39511ff4.jpg", "model": "/models/dishes/malai-kofta.glb" },
+        { "id": "kashmiri-kofta", "name": "Kashmiri Kofta", "price": 160, "image": "", "model": "" },
+        { "id": "kadhai-kofta", "name": "Kadhai Kofta", "price": 160, "image": "", "model": "" },
+        { "id": "rasbhari-kofta", "name": "Rasbhari Kofta", "price": 160, "image": "", "model": "" },
+        { "id": "shahi-kofta", "name": "Shahi Kofta", "price": 160, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "mushroom",
+      "name": "Mushroom Dishes",
+      "description": "Fresh mushroom delicacies",
+      "image": "/stock_images/indian_mushroom_curr_3cb7a7b3.jpg",
+      "model": "/models/categories/mushroom.glb",
+      "dishes": [
+        { "id": "mushroom-mutter", "name": "Mushroom Mutter", "price": 160, "image": "", "model": "" },
+        { "id": "mushroom-do-pyaza", "name": "Mushroom Do-Pyaza", "price": 160, "image": "", "model": "" },
+        { "id": "mushroom-masala", "name": "Mushroom Masala", "price": 160, "image": "", "model": "" },
+        { "id": "mushroom-muglai", "name": "Mushroom Muglai", "price": 160, "image": "", "model": "" },
+        { "id": "mushroom-paneer-masala", "name": "Mushroom Paneer Masala", "price": 165, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "kaju",
+      "name": "Kaju Dishes",
+      "description": "Premium cashew-based curries",
+      "image": "/stock_images/indian_kaju_cashew_n_aa557941.jpg",
+      "model": "/models/categories/kaju.glb",
+      "dishes": [
+        { "id": "kaju-curry", "name": "Kaju Curry", "price": 195, "image": "", "model": "" },
+        { "id": "kaju-paneer-korma", "name": "Kaju Paneer Korma", "price": 195, "image": "", "model": "" },
+        { "id": "kaju-singapuri", "name": "Kaju Singapuri", "price": 195, "image": "", "model": "" },
+        { "id": "kaju-masala", "name": "Kaju Masala", "price": 195, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "chole",
+      "name": "Chole & Chana",
+      "description": "Chickpea specialties",
+      "image": "/stock_images/indian_punjabi_chole_93ed0a17.jpg",
+      "model": "/models/categories/chole.glb",
+      "dishes": [
+        { "id": "punjabi-chole-masala", "name": "Punjabi Chole Masala", "price": 150, "image": "", "model": "" },
+        { "id": "kadhai-chhole", "name": "Kadhai Chhole", "price": 150, "image": "", "model": "" },
+        { "id": "aloo-chhole", "name": "Aloo Chhole", "price": 75, "image": "", "model": "" },
+        { "id": "chana-masala", "name": "Chana Masala", "price": 90, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "vegetables",
+      "name": "Vegetable Dishes",
+      "description": "Fresh seasonal vegetables",
+      "image": "/stock_images/indian_mixed_vegetab_84fea358.jpg",
+      "model": "/models/categories/vegetables.glb",
+      "dishes": [
+        { "id": "sev-bhaji", "name": "Sev Bhaji", "price": 125, "image": "", "model": "" },
+        { "id": "sev-tomato", "name": "Sev Tomato", "price": 120, "image": "", "model": "" },
+        { "id": "kadhi-pakoda", "name": "Kadhi Pakoda", "price": 75, "image": "", "model": "" },
+        { "id": "aloo-gobi", "name": "Aloo Gobi", "price": 75, "image": "", "model": "" },
+        { "id": "baigan-masala", "name": "Baigan Masala", "price": 75, "image": "", "model": "" },
+        { "id": "aloo-palak", "name": "Aloo Palak", "price": 75, "image": "", "model": "" },
+        { "id": "aloo-fry", "name": "Aloo Fry", "price": 75, "image": "", "model": "" },
+        { "id": "aloo-mutter", "name": "Aloo Mutter", "price": 75, "image": "", "model": "" },
+        { "id": "bhindi-kurkuri", "name": "Bhindi Kurkuri", "price": 145, "image": "", "model": "" },
+        { "id": "bhindi-masala", "name": "Bhindi Masala", "price": 145, "image": "", "model": "" },
+        { "id": "bhindi-do-pyaza", "name": "Bhindi Do-Pyaza", "price": 90, "image": "", "model": "" },
+        { "id": "mix-veg", "name": "Mix Veg", "price": 90, "image": "", "model": "" },
+        { "id": "hara-mutter-masala", "name": "Hara Mutter Masala", "price": 90, "image": "", "model": "" },
+        { "id": "kadhai-veg", "name": "Kadhai Veg", "price": 150, "image": "", "model": "" },
+        { "id": "handi-veg", "name": "Handi Veg", "price": 150, "image": "", "model": "" },
+        { "id": "veg-jaipuri", "name": "Veg Jaipuri", "price": 150, "image": "", "model": "" },
+        { "id": "veg-kolhapuri", "name": "Veg Kolhapuri", "price": 150, "image": "", "model": "" },
+        { "id": "navratna-korma", "name": "Navratna Korma", "price": 180, "image": "", "model": "" },
+        { "id": "veg-manchurian", "name": "Veg Manchurian", "price": 145, "image": "", "model": "" },
+        { "id": "veg-jalfrezi", "name": "Veg Jalfrezi", "price": 145, "image": "", "model": "" },
+        { "id": "methi-malai", "name": "Methi Malai", "price": 185, "image": "", "model": "" },
+        { "id": "tomato-masala", "name": "Tomato Masala", "price": 165, "image": "", "model": "" },
+        { "id": "stuffed-tomato-masala", "name": "Stuffed Tomato Masala", "price": 180, "image": "", "model": "" },
+        { "id": "shahi-mutter", "name": "Shahi Mutter", "price": 185, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "breads",
+      "name": "Breads",
+      "description": "Fresh Indian breads",
+      "image": "/stock_images/indian_naan_bread_ro_e8b4d235.jpg",
+      "model": "/models/categories/breads.glb",
+      "dishes": [
+        { "id": "tawa-roti", "name": "Tawa Roti", "price": 10, "image": "", "model": "" },
+        { "id": "tandoori-roti", "name": "Tandoori Roti", "price": 12, "image": "", "model": "" },
+        { "id": "tawa-butter-roti", "name": "Tawa Butter Roti", "price": 12, "image": "", "model": "" },
+        { "id": "tandoor-butter-roti", "name": "Tandoor Butter Roti", "price": 15, "image": "", "model": "" },
+        { "id": "missi-roti", "name": "Missi Roti", "price": 20, "image": "", "model": "" },
+        { "id": "lachha-paratha", "name": "Lachha Paratha", "price": 30, "image": "", "model": "" },
+        { "id": "plain-naan", "name": "Plain Naan", "price": 25, "image": "", "model": "" },
+        { "id": "butter-naan", "name": "Butter Naan", "price": 30, "image": "/stock_images/butter_naan_indian_f_ce8c7b0a.jpg", "model": "/models/dishes/butter-naan.glb" },
+        { "id": "aloo-paratha", "name": "Aloo Paratha", "price": 35, "image": "", "model": "" },
+        { "id": "stuffed-paratha", "name": "Stuffed Paratha", "price": 40, "image": "", "model": "" },
+        { "id": "paneer-paratha", "name": "Paneer Paratha", "price": 45, "image": "", "model": "" },
+        { "id": "stuffed-naan", "name": "Stuffed Naan", "price": 45, "image": "", "model": "" },
+        { "id": "garlic-naan", "name": "Garlic Naan", "price": 40, "image": "/stock_images/garlic_naan_indian_f_08fd23ef.jpg", "model": "/models/dishes/garlic-naan.glb" }
+      ]
+    },
+    {
+      "id": "rice",
+      "name": "Rice Dishes",
+      "description": "Aromatic rice preparations",
+      "image": "/stock_images/indian_basmati_rice__97c8b973.jpg",
+      "model": "/models/categories/rice.glb",
+      "dishes": [
+        { "id": "plain-rice", "name": "Plain Rice", "price": 80, "image": "", "model": "" },
+        { "id": "jeera-rice", "name": "Jeera Fried Rice", "price": 95, "image": "", "model": "" },
+        { "id": "masala-rice", "name": "Masala Rice", "price": 110, "image": "", "model": "" },
+        { "id": "butter-jeera-rice", "name": "Butter Jeera Fried Rice", "price": 110, "image": "", "model": "" },
+        { "id": "curd-rice", "name": "Curd Rice", "price": 110, "image": "", "model": "" },
+        { "id": "dal-rice", "name": "Dal Rice", "price": 75, "image": "", "model": "" },
+        { "id": "veg-pulao", "name": "Veg Pulao", "price": 115, "image": "", "model": "" },
+        { "id": "veg-fried-rice", "name": "Veg Fried Rice", "price": 115, "image": "", "model": "" },
+        { "id": "mutter-pulao", "name": "Mutter Pulao", "price": 115, "image": "", "model": "" },
+        { "id": "mushroom-fried-rice", "name": "Mushroom Fried Rice", "price": 120, "image": "", "model": "" },
+        { "id": "veg-biryani", "name": "Veg Biryani", "price": 120, "image": "/stock_images/veg_biryani_indian_v_7cc360ac.jpg", "model": "/models/dishes/veg-biryani.glb" },
+        { "id": "kashmiri-pulao", "name": "Kashmiri Pulao", "price": 120, "image": "", "model": "" },
+        { "id": "manchurian-fried-rice", "name": "Manchurian Fried Rice", "price": 120, "image": "", "model": "" },
+        { "id": "tawa-pulao", "name": "Tawa Pulao", "price": 120, "image": "", "model": "" },
+        { "id": "szechwan-fried-rice", "name": "Szechwan Fried Rice", "price": 110, "image": "", "model": "" },
+        { "id": "kadhi-rice", "name": "Kadhi Rice", "price": 120, "image": "", "model": "" },
+        { "id": "butter-dal-rice", "name": "Butter Dal Rice", "price": 130, "image": "", "model": "" },
+        { "id": "punjabi-khichdi", "name": "Punjabi Khichdi", "price": 130, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "dal",
+      "name": "Dal (Lentils)",
+      "description": "Traditional lentil dishes",
+      "image": "/stock_images/indian_dal_tadka_yel_ed326f09.jpg",
+      "model": "/models/categories/dal.glb",
+      "dishes": [
+        { "id": "dal-fry", "name": "Dal Fry", "price": 110, "image": "", "model": "" },
+        { "id": "dal-tadka", "name": "Dal Tadka", "price": 120, "image": "/stock_images/dal_tadka_indian_yel_4d1fa786.jpg", "model": "/models/dishes/dal-tadka.glb" },
+        { "id": "dal-butter-fry", "name": "Dal Butter Fry", "price": 130, "image": "", "model": "" },
+        { "id": "dal-makhani", "name": "Dal Makhani", "price": 130, "image": "/stock_images/dal_makhani_indian_b_cb81b781.jpg", "model": "/models/dishes/dal-makhani.glb" },
+        { "id": "dal-handi", "name": "Dal Handi", "price": 130, "image": "", "model": "" },
+        { "id": "dal-tadka-butter-fry", "name": "Dal Tadka Butter Fry", "price": 140, "image": "", "model": "" },
+        { "id": "dal-kabila", "name": "Dal Kabila", "price": 145, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "salads",
+      "name": "Salads & Sides",
+      "description": "Fresh salads and accompaniments",
+      "image": "/stock_images/fresh_indian_green_s_7c03dd9e.jpg",
+      "model": "/models/categories/salads.glb",
+      "dishes": [
+        { "id": "papad-dry", "name": "Papad Dry", "price": 10, "image": "", "model": "" },
+        { "id": "papad-fry", "name": "Papad Fry", "price": 15, "image": "", "model": "" },
+        { "id": "papad-masala", "name": "Papad Masala", "price": 20, "image": "", "model": "" },
+        { "id": "onion-salad", "name": "Onion Salad", "price": 15, "image": "", "model": "" },
+        { "id": "mirchi-fried", "name": "Mirchi Fried", "price": 20, "image": "", "model": "" },
+        { "id": "tomato-salad", "name": "Tomato Salad", "price": 20, "image": "", "model": "" },
+        { "id": "green-salad", "name": "Green Salad", "price": 25, "image": "", "model": "" },
+        { "id": "kachumber-salad", "name": "Kachumber Salad", "price": 30, "image": "", "model": "" },
+        { "id": "boondi-raita", "name": "Boondi Raita", "price": 40, "image": "", "model": "" },
+        { "id": "dahi-tadka", "name": "Dahi Tadka", "price": 40, "image": "", "model": "" }
+      ]
+    },
+    {
+      "id": "desserts",
+      "name": "Desserts & Beverages",
+      "description": "Sweet treats and refreshing drinks",
+      "image": "/stock_images/indian_gulab_jamun_r_56c87138.jpg",
+      "model": "/models/categories/desserts.glb",
+      "dishes": [
+        { "id": "gulab-jamun", "name": "Gulab Jamun (2pcs)", "price": 40, "image": "/stock_images/gulab_jamun_indian_d_271fa6a0.jpg", "model": "/models/dishes/gulab-jamun.glb" },
+        { "id": "rasmalai", "name": "Rasmalai", "price": 60, "image": "", "model": "" },
+        { "id": "rabdi", "name": "Rabdi", "price": 50, "image": "", "model": "" },
+        { "id": "lassi", "name": "Lassi", "price": 40, "image": "", "model": "" },
+        { "id": "chach", "name": "Chach (Buttermilk)", "price": 20, "image": "", "model": "" },
+        { "id": "curd", "name": "Curd", "price": 25, "image": "", "model": "" }
+      ]
+    }
+  ]
+}
