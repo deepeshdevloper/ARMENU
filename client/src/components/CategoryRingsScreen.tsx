@@ -16,26 +16,7 @@ const categoryModelMap: Record<string, string> = {
   drinks: "/models/cocktail.glb",
   veg: "/models/salad.glb",
   breakfast: "/models/chicken.glb",
-  italian: "/models/spaghetti.glb",
-  asian: "/models/ramen.glb",
-  mexican: "/models/tacos.glb",
-  american: "/models/burger.glb",
-  mediterranean: "/models/gyro.glb",
-  seafood: "/models/burger.glb",
-  grill: "/models/steak.glb",
-  pasta: "/models/spaghetti.glb",
-  sandwiches: "/models/sandwich.glb",
-  soups: "/models/soup.glb",
-  appetizers: "/models/tacos.glb",
-  bbq: "/models/steak.glb",
-  sushi: "/models/sushi.glb",
-  indian: "/models/burger.glb",
-  chinese: "/models/ramen.glb",
-  japanese: "/models/sushi.glb",
-  french: "/models/cake.glb",
-  greek: "/models/gyro.glb",
-  thai: "/models/ramen.glb",
-  korean: "/models/burger.glb"
+  italian: "/models/spaghetti.glb"
 };
 
 function DishModel({ modelPath, isHovered, isSelected, isMobile }: { 
@@ -65,7 +46,7 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
 
   const clonedScene = useMemo(() => scene.clone(), [scene]);
   
-  const modelScale = isMobile ? 1.4 : 1.8;
+  const modelScale = isMobile ? 2.8 : 3.5;
   
   return (
     <group ref={modelRef} scale={modelScale}>
@@ -113,8 +94,8 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
   const opacity = isSelected ? 1 : isHovered ? 1 : 0.85;
   const modelPath = categoryModelMap[category.id];
   
-  const ringSize = isMobile ? 1.8 : 2.2;
-  const ringThickness = isMobile ? 0.15 : 0.18;
+  const ringSize = isMobile ? 2.2 : 3.0;
+  const ringThickness = isMobile ? 0.18 : 0.22;
 
   return (
     <group 
@@ -160,8 +141,8 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
       
       <Suspense fallback={null}>
         <Text
-          position={[0, -1.2, 0]}
-          fontSize={isMobile ? 0.18 : 0.22}
+          position={[0, -1.5, 0]}
+          fontSize={isMobile ? 0.22 : 0.28}
           color="white"
           anchorX="center"
           anchorY="middle"
@@ -186,8 +167,9 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, ca
   const groupRef = useRef<THREE.Group>(null);
 
   const positions = useMemo(() => {
-    const spacing = isMobile ? 4.2 : 5.0;
-    const startX = -spacing * 2.5;
+    const spacing = isMobile ? 6.5 : 7.5;
+    const numRings = categories.length;
+    const startX = -spacing * (numRings - 1) / 2;
     
     return categories.map((_, index) => {
       const x = startX + index * spacing;
@@ -197,14 +179,6 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, ca
       return [x, y, z] as [number, number, number];
     });
   }, [categories.length, isMobile]);
-
-  useFrame(() => {
-    if (groupRef.current) {
-      const spacing = isMobile ? 4.2 : 5.0;
-      const targetX = -carouselOffset * spacing * 6;
-      groupRef.current.position.x += (targetX - groupRef.current.position.x) * 0.1;
-    }
-  });
 
   return (
     <>
@@ -254,7 +228,7 @@ export function CategoryRingsScreen() {
   const isMobile = useIsMobile();
 
   const categories = defaultCategories;
-  const RINGS_PER_PAGE = 6;
+  const RINGS_PER_PAGE = isMobile ? 3 : 4;
   const totalPages = Math.ceil(categories.length / RINGS_PER_PAGE);
 
   const cameraConfig = useMemo(() => {
@@ -328,8 +302,8 @@ export function CategoryRingsScreen() {
               onSelect={handleSelect} 
               onVibrate={handleVibrate}
               isMobile={isMobile}
-              categories={categories}
-              carouselOffset={carouselPage}
+              categories={categories.slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)}
+              carouselOffset={0}
             />
           </Suspense>
         </Canvas>
@@ -377,8 +351,8 @@ export function CategoryRingsScreen() {
           ))}
         </div>
         
-        <div className="w-full max-w-6xl overflow-x-auto scrollbar-hide pointer-events-auto">
-          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center min-w-min px-2 pb-2">
+        <div className="w-full max-w-6xl pointer-events-auto overflow-hidden">
+          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center px-2 pb-2">
             {categories
               .slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)
               .map((category) => (

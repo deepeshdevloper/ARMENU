@@ -5,5 +5,5 @@
 [x] 5. Add swipe gestures and arrow navigation
 [x] 6. Increase ring and model sizes
 [x] 7. Map 3D models for all categories
-[ ] 8. Review implementation with architect
-[ ] 9. Mark the import as completed
+[x] 8. Review implementation with architect
+[x] 9. Mark the import as completed
