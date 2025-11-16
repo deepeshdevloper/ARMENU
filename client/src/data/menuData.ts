@@ -2,126 +2,154 @@ import { Category, Dish } from "@/lib/stores/useARMenu";
 
 export const categories: Category[] = [
   {
-    id: "spicy",
-    name: "Spicy",
-    color: "#DC2626",
-    neonColor: "#EF4444",
-    emoji: "🔥"
-  },
-  {
-    id: "dessert",
-    name: "Dessert",
-    color: "#EC4899",
-    neonColor: "#F9A8D4",
-    emoji: "🍫"
-  },
-  {
-    id: "drinks",
-    name: "Drinks",
-    color: "#06B6D4",
-    neonColor: "#67E8F9",
-    emoji: "🍹"
+    id: "starters",
+    name: "शुरुआत / Starters",
+    color: "#FF9933",
+    neonColor: "#FFB366",
+    emoji: "🥟"
   },
   {
     id: "veg",
-    name: "Veg",
-    color: "#10B981",
-    neonColor: "#6EE7B7",
-    emoji: "🥗"
+    name: "शाकाहारी / Veg Curry",
+    color: "#138808",
+    neonColor: "#4CAF50",
+    emoji: "🥘"
   },
   {
-    id: "breakfast",
-    name: "Breakfast",
-    color: "#F59E0B",
-    neonColor: "#FCD34D",
-    emoji: "🍳"
+    id: "nonveg",
+    name: "मांसाहारी / Non-Veg",
+    color: "#DC2626",
+    neonColor: "#EF4444",
+    emoji: "🍗"
   },
   {
-    id: "italian",
-    name: "Italian",
-    color: "#EF4444",
-    neonColor: "#FCA5A5",
-    emoji: "🍝"
+    id: "breads",
+    name: "रोटी / Breads",
+    color: "#D4A574",
+    neonColor: "#E6C8A0",
+    emoji: "🫓"
+  },
+  {
+    id: "rice",
+    name: "चावल / Rice & Biryani",
+    color: "#8B4513",
+    neonColor: "#B8733D",
+    emoji: "🍚"
+  },
+  {
+    id: "desserts",
+    name: "मिठाई / Desserts",
+    color: "#EC4899",
+    neonColor: "#F9A8D4",
+    emoji: "🍬"
+  },
+  {
+    id: "beverages",
+    name: "पेय / Beverages",
+    color: "#06B6D4",
+    neonColor: "#67E8F9",
+    emoji: "🥤"
   }
 ];
 
-const modelPaths = ["/models/burger.glb", "/models/cake.glb", "/models/cocktail.glb", "/models/salad.glb", "/models/tacos.glb", "/models/pizza.glb", "/models/icecream.glb", "/models/smoothie.glb"];
+const modelPaths = [
+  "/models/samosa.glb",
+  "/models/paneer_tikka.glb",
+  "/models/palak_paneer.glb",
+  "/models/butter_chicken.glb",
+  "/models/naan.glb",
+  "/models/biryani.glb",
+  "/models/gulab_jamun.glb",
+  "/models/lassi.glb"
+];
 
 const dishImages = {
-  spicy: [
-    "/images/spicy_burger_with_fl_297b2588.jpg",
-    "/images/spicy_chicken_wings__dd08c127.jpg",
-    "/images/spicy_ramen_noodle_b_a3a20037.jpg",
-    "/images/pizza_slice_with_che_f20b399c.jpg"
-  ],
-  dessert: [
-    "/images/chocolate_cake_desse_5162c25e.jpg",
-    "/images/ice_cream_sundae_wit_b2371b6a.jpg",
-    "/images/cheesecake_with_berr_2c90d9b7.jpg",
-    "/images/tiramisu_dessert_67605694.jpg"
-  ],
-  drinks: [
-    "/images/colorful_tropical_dr_0340aff3.jpg",
-    "/images/smoothie_drink_healt_1adabfb8.jpg",
-    "/images/mojito_cocktail_with_f0507286.jpg",
-    "/images/berry_smoothie_bowl_59659683.jpg"
+  starters: [
+    "/images/samosa_indian_appeti_61c753a0.jpg",
+    "/images/samosa_indian_appeti_51297875.jpg",
+    "/images/paneer_tikka_indian__01dee1e2.jpg",
+    "/images/paneer_tikka_indian__a19e47f9.jpg"
   ],
   veg: [
-    "/images/fresh_green_salad_bo_39e5747b.jpg",
-    "/images/buddha_bowl_with_qui_d038e486.jpg",
-    "/images/veggie_wrap_with_hum_aa279a4e.jpg",
-    "/images/caprese_salad_tomato_72ff8752.jpg"
+    "/images/palak_paneer_spinach_b32aa6e1.jpg",
+    "/images/palak_paneer_spinach_0330167f.jpg",
+    "/images/palak_paneer_spinach_88ee8bae.jpg",
+    "/images/palak_paneer_spinach_9b576870.jpg"
   ],
-  breakfast: [
-    "/images/fluffy_pancakes_with_97483bd5.jpg",
-    "/images/avocado_toast_on_sou_8e9e6073.jpg",
-    "/images/eggs_benedict_with_h_d4c1e7da.jpg",
-    "/images/french_toast_with_ci_17c2c51c.jpg"
+  nonveg: [
+    "/images/butter_chicken_curry_b3ee8d64.jpg",
+    "/images/butter_chicken_curry_a02fbf41.jpg",
+    "/images/butter_chicken_curry_482a21bc.jpg",
+    "/images/butter_chicken_curry_7740a7d4.jpg"
   ],
-  italian: [
-    "/images/margherita_pizza_fre_59cb691e.jpg",
-    "/images/pasta_carbonara_crea_e282f522.jpg",
-    "/images/lasagna_with_meat_sa_893d0494.jpg",
-    "/images/mushroom_risotto_cre_5f94a090.jpg"
+  breads: [
+    "/images/naan_bread_indian_fl_d9f6ba58.jpg",
+    "/images/naan_bread_indian_fl_34555510.jpg",
+    "/images/naan_bread_indian_fl_c00e2033.jpg",
+    "/images/naan_bread_indian_fl_093b2f1a.jpg"
+  ],
+  rice: [
+    "/images/biryani_rice_indian__43785596.jpg",
+    "/images/biryani_rice_indian__ef5eaa75.jpg",
+    "/images/biryani_rice_indian__793333e1.jpg",
+    "/images/biryani_rice_indian__4a18e5dd.jpg"
+  ],
+  desserts: [
+    "/images/gulab_jamun_indian_d_ac32ec73.jpg",
+    "/images/gulab_jamun_indian_d_0f10d8af.jpg",
+    "/images/gulab_jamun_indian_d_ebf9deaf.jpg",
+    "/images/gulab_jamun_indian_d_6cc93511.jpg"
+  ],
+  beverages: [
+    "/images/lassi_mango_indian_b_aecf5eba.jpg",
+    "/images/lassi_mango_indian_b_c5b61635.jpg",
+    "/images/lassi_mango_indian_b_ce6a32a5.jpg",
+    "/images/lassi_mango_indian_b_f01e9328.jpg"
   ]
 };
 
 const dishTemplates = {
-  spicy: [
-    { name: "Inferno Burger", desc: "Blazing hot burger with ghost pepper sauce", emoji: "🔥", ingredients: ["Beef Patty", "Ghost Pepper", "Jalapeños", "Spicy Mayo", "Lettuce", "Tomato"] },
-    { name: "Dragon Wings", desc: "Crispy wings with habanero glaze", emoji: "🌶️", ingredients: ["Chicken Wings", "Habanero Sauce", "Garlic", "Butter"] },
-    { name: "Fire Noodles", desc: "Ultra spicy Korean-style instant noodles", emoji: "🍜", ingredients: ["Noodles", "Chili Powder", "Sesame Oil", "Green Onions"] },
-    { name: "Volcano Pizza", desc: "Spicy pepperoni with chili flakes", emoji: "🍕", ingredients: ["Pizza Dough", "Spicy Pepperoni", "Mozzarella", "Chili Oil", "Jalapeños"] },
-  ],
-  dessert: [
-    { name: "Velvet Dream Cake", desc: "Rich chocolate layer cake with ganache", emoji: "🍰", ingredients: ["Chocolate", "Butter", "Eggs", "Sugar", "Cream", "Cocoa"] },
-    { name: "Paradise Sundae", desc: "Triple scoop ice cream with toppings", emoji: "🍨", ingredients: ["Vanilla Ice Cream", "Chocolate Sauce", "Whipped Cream", "Cherry", "Sprinkles"] },
-    { name: "Cheesecake Bliss", desc: "New York style cheesecake with berries", emoji: "🍰", ingredients: ["Cream Cheese", "Graham Crackers", "Strawberries", "Sugar"] },
-    { name: "Tiramisu Tower", desc: "Classic Italian coffee-soaked dessert", emoji: "☕", ingredients: ["Mascarpone", "Coffee", "Ladyfingers", "Cocoa Powder"] },
-  ],
-  drinks: [
-    { name: "Tropical Sunset", desc: "Colorful fruity cocktail with rum", emoji: "🍹", ingredients: ["Rum", "Pineapple Juice", "Orange Juice", "Grenadine", "Ice"] },
-    { name: "Green Energy Smoothie", desc: "Healthy green smoothie with superfoods", emoji: "🥤", ingredients: ["Spinach", "Banana", "Mango", "Chia Seeds", "Coconut Water"] },
-    { name: "Mojito Magic", desc: "Refreshing mint and lime cocktail", emoji: "🍹", ingredients: ["White Rum", "Lime", "Mint", "Sugar", "Soda Water"] },
-    { name: "Berry Blast", desc: "Mixed berry smoothie bowl", emoji: "🫐", ingredients: ["Blueberries", "Strawberries", "Yogurt", "Honey"] },
+  starters: [
+    { name: "समोसा / Samosa", desc: "Crispy triangular pastry filled with spiced potatoes and peas", emoji: "🥟", ingredients: ["Potatoes", "Peas", "Cumin", "Coriander", "Pastry", "Green Chili"] },
+    { name: "आलू टिक्की / Aloo Tikki", desc: "Golden potato patties with tangy tamarind chutney", emoji: "🥔", ingredients: ["Potatoes", "Chickpeas", "Tamarind", "Chaat Masala", "Coriander"] },
+    { name: "पनीर टिक्का / Paneer Tikka", desc: "Marinated cottage cheese grilled in tandoor", emoji: "🧀", ingredients: ["Paneer", "Yogurt", "Tandoori Masala", "Bell Peppers", "Onions"] },
+    { name: "वेज पकोड़ा / Veg Pakora", desc: "Mixed vegetable fritters with mint chutney", emoji: "🌶️", ingredients: ["Mixed Vegetables", "Gram Flour", "Spices", "Mint", "Coriander"] },
   ],
   veg: [
-    { name: "Garden Fresh Bowl", desc: "Crispy mixed greens with vinaigrette", emoji: "🥗", ingredients: ["Lettuce", "Cucumber", "Tomato", "Carrots", "Olive Oil", "Lemon"] },
-    { name: "Buddha Bowl", desc: "Quinoa and roasted vegetable bowl", emoji: "🥙", ingredients: ["Quinoa", "Sweet Potato", "Chickpeas", "Avocado", "Tahini"] },
-    { name: "Veggie Wrap", desc: "Grilled vegetables in whole wheat wrap", emoji: "🌯", ingredients: ["Tortilla", "Bell Peppers", "Zucchini", "Hummus", "Spinach"] },
-    { name: "Caprese Salad", desc: "Fresh mozzarella with tomatoes and basil", emoji: "🍅", ingredients: ["Mozzarella", "Tomatoes", "Basil", "Balsamic", "Olive Oil"] },
+    { name: "पालक पनीर / Palak Paneer", desc: "Cottage cheese in creamy spinach gravy", emoji: "🥘", ingredients: ["Paneer", "Spinach", "Cream", "Ginger", "Garlic", "Garam Masala"] },
+    { name: "दाल मखनी / Dal Makhani", desc: "Black lentils slow-cooked with butter and cream", emoji: "🍲", ingredients: ["Black Lentils", "Kidney Beans", "Butter", "Cream", "Tomatoes", "Spices"] },
+    { name: "शाही पनीर / Shahi Paneer", desc: "Royal cottage cheese curry in rich cashew gravy", emoji: "👑", ingredients: ["Paneer", "Cashews", "Cream", "Tomatoes", "Cardamom", "Saffron"] },
+    { name: "बैंगन भर्ता / Baingan Bharta", desc: "Smoky roasted eggplant mash with spices", emoji: "🍆", ingredients: ["Eggplant", "Onions", "Tomatoes", "Green Chili", "Coriander", "Cumin"] },
   ],
-  breakfast: [
-    { name: "Classic Pancakes", desc: "Fluffy buttermilk pancakes with syrup", emoji: "🥞", ingredients: ["Flour", "Eggs", "Milk", "Butter", "Maple Syrup"] },
-    { name: "Avocado Toast", desc: "Smashed avocado on sourdough", emoji: "🥑", ingredients: ["Avocado", "Sourdough Bread", "Lemon", "Salt", "Pepper"] },
-    { name: "Eggs Benedict", desc: "Poached eggs with hollandaise sauce", emoji: "🍳", ingredients: ["Eggs", "English Muffin", "Ham", "Hollandaise", "Chives"] },
-    { name: "French Toast", desc: "Cinnamon-spiced French toast", emoji: "🍞", ingredients: ["Bread", "Eggs", "Cinnamon", "Vanilla", "Powdered Sugar"] },
+  nonveg: [
+    { name: "बटर चिकन / Butter Chicken", desc: "Tandoori chicken in creamy tomato gravy", emoji: "🍗", ingredients: ["Chicken", "Butter", "Cream", "Tomatoes", "Fenugreek", "Spices"] },
+    { name: "चिकन टिक्का मसाला / Chicken Tikka Masala", desc: "Grilled chicken in spiced tomato curry", emoji: "🔥", ingredients: ["Chicken", "Yogurt", "Tomatoes", "Cream", "Garam Masala", "Kasuri Methi"] },
+    { name: "रोगन जोश / Rogan Josh", desc: "Aromatic lamb curry from Kashmir", emoji: "🍖", ingredients: ["Lamb", "Yogurt", "Kashmiri Chili", "Fennel", "Ginger", "Cardamom"] },
+    { name: "कड़ाही चिकन / Kadai Chicken", desc: "Chicken cooked with bell peppers in karahi", emoji: "🌶️", ingredients: ["Chicken", "Bell Peppers", "Tomatoes", "Onions", "Coriander Seeds", "Dry Red Chili"] },
   ],
-  italian: [
-    { name: "Margherita Pizza", desc: "Classic tomato, mozzarella, and basil", emoji: "🍕", ingredients: ["Pizza Dough", "Tomato Sauce", "Mozzarella", "Basil", "Olive Oil"] },
-    { name: "Carbonara", desc: "Creamy pasta with pancetta", emoji: "🍝", ingredients: ["Spaghetti", "Eggs", "Pancetta", "Parmesan", "Black Pepper"] },
-    { name: "Lasagna", desc: "Layered pasta with meat sauce", emoji: "🍝", ingredients: ["Lasagna Noodles", "Beef", "Ricotta", "Mozzarella", "Tomato Sauce"] },
-    { name: "Risotto", desc: "Creamy arborio rice with mushrooms", emoji: "🍚", ingredients: ["Arborio Rice", "Mushrooms", "Parmesan", "White Wine", "Butter"] },
+  breads: [
+    { name: "बटर नान / Butter Naan", desc: "Soft leavened bread brushed with butter", emoji: "🫓", ingredients: ["Flour", "Yogurt", "Yeast", "Butter", "Nigella Seeds"] },
+    { name: "लहसुन नान / Garlic Naan", desc: "Naan topped with garlic and coriander", emoji: "🧄", ingredients: ["Flour", "Garlic", "Butter", "Coriander", "Yeast"] },
+    { name: "तंदूरी रोटी / Tandoori Roti", desc: "Whole wheat flatbread from tandoor", emoji: "🍞", ingredients: ["Whole Wheat Flour", "Water", "Salt"] },
+    { name: "लच्छा पराठा / Laccha Paratha", desc: "Layered whole wheat flatbread", emoji: "🥞", ingredients: ["Whole Wheat Flour", "Ghee", "Salt", "Water"] },
+  ],
+  rice: [
+    { name: "हैदराबादी बिरयानी / Hyderabadi Biryani", desc: "Fragrant basmati rice with spiced chicken", emoji: "🍚", ingredients: ["Basmati Rice", "Chicken", "Yogurt", "Saffron", "Fried Onions", "Whole Spices"] },
+    { name: "वेज बिरयानी / Veg Biryani", desc: "Aromatic rice with mixed vegetables", emoji: "🥗", ingredients: ["Basmati Rice", "Mixed Vegetables", "Yogurt", "Saffron", "Mint", "Spices"] },
+    { name: "जीरा राइस / Jeera Rice", desc: "Basmati rice tempered with cumin", emoji: "🌾", ingredients: ["Basmati Rice", "Cumin Seeds", "Ghee", "Bay Leaf"] },
+    { name: "पुलाव / Pulao", desc: "Mildly spiced vegetable rice", emoji: "🍛", ingredients: ["Basmati Rice", "Peas", "Carrots", "Whole Spices", "Ghee"] },
+  ],
+  desserts: [
+    { name: "गुलाब जामुन / Gulab Jamun", desc: "Sweet milk dumplings in rose-cardamom syrup", emoji: "🍬", ingredients: ["Milk Powder", "Flour", "Sugar", "Rose Water", "Cardamom", "Saffron"] },
+    { name: "रसमलाई / Rasmalai", desc: "Cottage cheese patties in sweetened milk", emoji: "🥛", ingredients: ["Paneer", "Milk", "Sugar", "Cardamom", "Saffron", "Pistachios"] },
+    { name: "खीर / Kheer", desc: "Traditional rice pudding with nuts", emoji: "🍚", ingredients: ["Rice", "Milk", "Sugar", "Cardamom", "Almonds", "Raisins"] },
+    { name: "जलेबी / Jalebi", desc: "Crispy sweet pretzel in sugar syrup", emoji: "🌀", ingredients: ["Flour", "Yogurt", "Sugar", "Saffron", "Cardamom"] },
+  ],
+  beverages: [
+    { name: "आम का लस्सी / Mango Lassi", desc: "Sweet yogurt drink blended with mango", emoji: "🥭", ingredients: ["Yogurt", "Mango", "Sugar", "Cardamom", "Ice"] },
+    { name: "मीठी लस्सी / Sweet Lassi", desc: "Traditional churned yogurt beverage", emoji: "🥤", ingredients: ["Yogurt", "Sugar", "Rose Water", "Ice"] },
+    { name: "मसाला चाय / Masala Chai", desc: "Spiced milk tea with aromatic herbs", emoji: "☕", ingredients: ["Tea Leaves", "Milk", "Ginger", "Cardamom", "Cinnamon", "Sugar"] },
+    { name: "नींबू पानी / Nimbu Pani", desc: "Refreshing Indian lemonade with spices", emoji: "🍋", ingredients: ["Lemon", "Water", "Sugar", "Black Salt", "Cumin Powder", "Mint"] },
   ]
 };
 
@@ -135,7 +163,7 @@ function generateDishes(): Dish[] {
   const allDishes: Dish[] = [];
   
   categories.forEach((category) => {
-    const templates = dishTemplates[category.id as keyof typeof dishTemplates] || dishTemplates.spicy;
+    const templates = dishTemplates[category.id as keyof typeof dishTemplates] || dishTemplates.starters;
     const images = dishImages[category.id as keyof typeof dishImages];
     
     templates.forEach((template, templateIndex) => {

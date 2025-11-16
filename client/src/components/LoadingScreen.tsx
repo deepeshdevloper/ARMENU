@@ -58,7 +58,7 @@ export function LoadingScreen() {
 
   return (
     <div className="fixed inset-0 w-full h-full flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600" />
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-green-600 to-amber-700" />
       
       <div className="absolute inset-0">
         {particles.map((particle) => (
@@ -124,22 +124,22 @@ export function LoadingScreen() {
         
         <div className="text-center w-full">
           <motion.p 
-            className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-wide"
+            className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-wide"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Loading Menu...
+            बापू की कुटिया
           </motion.p>
           
           {showSecondLine && (
             <motion.p
-              className="text-white/80 text-xs sm:text-sm md:text-base mt-2 sm:mt-3"
+              className="text-white/90 text-sm sm:text-base md:text-lg mt-2 sm:mt-3 font-semibold"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              Fetching AR models...
+              Bapu Ki Kutiya • Roshanpura, Bhopal
             </motion.p>
           )}
           

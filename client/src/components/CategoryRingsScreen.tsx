@@ -11,12 +11,13 @@ import { useIsMobile } from "@/hooks/use-is-mobile";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const categoryModelMap: Record<string, string> = {
-  spicy: "/models/burger.glb",
-  dessert: "/models/cake.glb",
-  drinks: "/models/cocktail.glb",
-  veg: "/models/salad.glb",
-  breakfast: "/models/chicken.glb",
-  italian: "/models/spaghetti.glb"
+  starters: "/models/samosa.glb",
+  veg: "/models/palak_paneer.glb",
+  nonveg: "/models/butter_chicken.glb",
+  breads: "/models/naan.glb",
+  rice: "/models/biryani.glb",
+  desserts: "/models/gulab_jamun.glb",
+  beverages: "/models/lassi.glb"
 };
 
 function DishModel({ modelPath, isHovered, isSelected, isMobile }: { 
@@ -281,7 +282,7 @@ export function CategoryRingsScreen() {
   return (
     <div className="fixed inset-0 w-full h-full overflow-hidden">
       <div 
-        className="absolute inset-0 bg-gradient-to-br from-purple-900 via-gray-900 to-black"
+        className="absolute inset-0 bg-gradient-to-br from-orange-800 via-green-900 to-amber-950"
         style={{
           filter: isTransitioning ? 'blur(10px)' : 'blur(0px)',
           transition: 'filter 0.5s ease-out'
@@ -396,12 +397,12 @@ export function CategoryRingsScreen() {
           }}
           className="inline-block"
         >
-          <div className="bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/10 shadow-lg">
+          <div className="bg-gradient-to-r from-orange-600/30 via-green-600/30 to-amber-600/30 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/20 shadow-lg">
             <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1">
-              👋 Welcome to AR Menu
+              🙏 स्वागत है बापू की कुटिया में
             </h1>
-            <p className="text-white/70 text-xs sm:text-sm">
-              Swipe or use arrows to browse • Tap a ring to explore
+            <p className="text-white/90 text-xs sm:text-sm font-medium">
+              Welcome to Bapu Ki Kutiya • Roshanpura, Bhopal
             </p>
           </div>
         </motion.div>
