@@ -46,7 +46,45 @@ export const categories: Category[] = [
 ];
 
 const modelPaths = ["/models/burger.glb", "/models/cake.glb", "/models/cocktail.glb", "/models/salad.glb", "/models/tacos.glb", "/models/pizza.glb", "/models/icecream.glb", "/models/smoothie.glb"];
-const imagePaths = ["/attached_assets/stock_images/spicy_burger_with_fl_b4463bbf.jpg", "/attached_assets/stock_images/chocolate_cake_desse_b2a52d50.jpg", "/attached_assets/stock_images/colorful_tropical_dr_4ff61cd0.jpg", "/attached_assets/stock_images/fresh_green_salad_bo_986a8005.jpg", "/attached_assets/stock_images/tacos_spicy_mexican__efc48d2a.jpg", "/attached_assets/stock_images/pizza_slice_with_che_aee88a99.jpg", "/attached_assets/stock_images/ice_cream_sundae_des_e42339eb.jpg", "/attached_assets/stock_images/smoothie_drink_healt_e500e28a.jpg"];
+
+const dishImages = {
+  spicy: [
+    "/images/spicy_burger_with_fl_297b2588.jpg",
+    "/images/spicy_chicken_wings__dd08c127.jpg",
+    "/images/spicy_ramen_noodle_b_a3a20037.jpg",
+    "/images/pizza_slice_with_che_f20b399c.jpg"
+  ],
+  dessert: [
+    "/images/chocolate_cake_desse_5162c25e.jpg",
+    "/images/ice_cream_sundae_wit_b2371b6a.jpg",
+    "/images/cheesecake_with_berr_2c90d9b7.jpg",
+    "/images/tiramisu_dessert_67605694.jpg"
+  ],
+  drinks: [
+    "/images/colorful_tropical_dr_0340aff3.jpg",
+    "/images/smoothie_drink_healt_1adabfb8.jpg",
+    "/images/mojito_cocktail_with_f0507286.jpg",
+    "/images/berry_smoothie_bowl_59659683.jpg"
+  ],
+  veg: [
+    "/images/fresh_green_salad_bo_39e5747b.jpg",
+    "/images/buddha_bowl_with_qui_d038e486.jpg",
+    "/images/veggie_wrap_with_hum_aa279a4e.jpg",
+    "/images/caprese_salad_tomato_72ff8752.jpg"
+  ],
+  breakfast: [
+    "/images/fluffy_pancakes_with_97483bd5.jpg",
+    "/images/avocado_toast_on_sou_8e9e6073.jpg",
+    "/images/eggs_benedict_with_h_d4c1e7da.jpg",
+    "/images/french_toast_with_ci_17c2c51c.jpg"
+  ],
+  italian: [
+    "/images/margherita_pizza_fre_59cb691e.jpg",
+    "/images/pasta_carbonara_crea_e282f522.jpg",
+    "/images/lasagna_with_meat_sa_893d0494.jpg",
+    "/images/mushroom_risotto_cre_5f94a090.jpg"
+  ]
+};
 
 const dishTemplates = {
   spicy: [
@@ -87,35 +125,36 @@ const dishTemplates = {
   ]
 };
 
+const nameVariations = [
+  "", "Classic", "Premium", "Deluxe", "Special", "Ultimate", "Signature", 
+  "Gourmet", "Traditional", "Modern", "Artisan", "Homemade", "Chef's",
+  "House", "Royal", "Imperial", "Supreme", "Divine", "Heavenly", "Perfect"
+];
+
 function generateDishes(): Dish[] {
   const allDishes: Dish[] = [];
-  let dishCounter = 0;
   
-  categories.forEach((category, catIndex) => {
+  categories.forEach((category) => {
     const templates = dishTemplates[category.id as keyof typeof dishTemplates] || dishTemplates.spicy;
+    const images = dishImages[category.id as keyof typeof dishImages];
     
-    for (let i = 0; i < 100; i++) {
-      const template = templates[i % templates.length];
-      const variation = Math.floor(i / templates.length) + 1;
-      const modelIndex = dishCounter % modelPaths.length;
-      const imageIndex = dishCounter % imagePaths.length;
-      
-      const calorieBase = 200 + (i * 5) % 600;
+    templates.forEach((template, templateIndex) => {
+      const modelIndex = allDishes.length % modelPaths.length;
+      const imageIndex = templateIndex;
+      const calorieBase = 200 + (templateIndex * 20);
       
       allDishes.push({
-        id: `${category.id}-${i + 1}`,
+        id: `${category.id}-${templateIndex}`,
         categoryId: category.id,
-        name: variation > 1 ? `${template.name} ${variation}` : template.name,
+        name: template.name,
         description: template.desc,
         calories: calorieBase,
         ingredients: template.ingredients,
         emoji: template.emoji,
-        image: imagePaths[imageIndex],
+        image: images[imageIndex],
         modelPath: modelPaths[modelIndex]
       });
-      
-      dishCounter++;
-    }
+    });
   });
   
   return allDishes;
