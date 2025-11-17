@@ -1,12 +1,37 @@
 import { XR, createXRStore, useXR } from "@react-three/xr";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
-import { Suspense, useRef, useState, useEffect } from "react";
+import { Suspense, useRef, useState, useEffect, useMemo, Component, ErrorInfo, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
 import { ChevronLeft, RotateCw, Maximize2 } from "lucide-react";
+
+class ModelErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('3D Model loading error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 const xrStore = createXRStore();
 
@@ -96,6 +121,44 @@ function Reticle({
   );
 }
 
+function FallbackDishMesh({ color }: { color: string }) {
+  return (
+    <>
+      <mesh>
+        <sphereGeometry args={[0.15, 32, 32]} />
+        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
+      </mesh>
+    </>
+  );
+}
+
+function DishModelMesh({ modelPath }: { modelPath: string }) {
+  const gltf = useGLTF(modelPath);
+  
+  const clonedScene = useMemo(() => {
+    try {
+      const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
+      if (!scene) return null;
+      
+      const cloned = scene.clone();
+      cloned.traverse((child: THREE.Object3D) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      return cloned;
+    } catch (error) {
+      console.error('Error cloning model:', error);
+      return null;
+    }
+  }, [gltf]);
+
+  if (!clonedScene) return null;
+
+  return <primitive object={clonedScene} />;
+}
+
 function ARDishModel({ 
   modelPath, 
   color,
@@ -107,25 +170,10 @@ function ARDishModel({
   position: THREE.Vector3 | null;
   isPlaced: boolean;
 }) {
-  const gltf = useGLTF(modelPath);
-  const clonedModel = useRef<THREE.Group | null>(null);
   const modelRef = useRef<THREE.Group>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
-
-  useEffect(() => {
-    const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
-    if (scene && !clonedModel.current) {
-      clonedModel.current = scene.clone();
-      if (clonedModel.current) {
-        clonedModel.current.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-      }
-    }
-  }, [gltf]);
+  
+  const hasValidPath = modelPath && modelPath.trim() !== '';
 
   useEffect(() => {
     if (isPlaced) {
@@ -133,17 +181,15 @@ function ARDishModel({
     }
   }, [isPlaced]);
 
-  useFrame((state, delta) => {
-    if (modelRef.current) {
-      if (isPlaced && position) {
-        if (animationProgress < 1) {
-          setAnimationProgress(Math.min(1, animationProgress + delta * 2));
-          const currentY = THREE.MathUtils.lerp(position.y + 0.3, position.y, animationProgress);
-          modelRef.current.position.set(position.x, currentY, position.z);
-          modelRef.current.scale.setScalar(2.5 * animationProgress);
-        }
-        modelRef.current.rotation.y += 0.005;
+  useFrame((_state, delta) => {
+    if (modelRef.current && isPlaced && position) {
+      if (animationProgress < 1) {
+        setAnimationProgress(prev => Math.min(1, prev + delta * 2));
+        const currentY = THREE.MathUtils.lerp(position.y + 0.3, position.y, animationProgress);
+        modelRef.current.position.set(position.x, currentY, position.z);
+        modelRef.current.scale.setScalar(2.5 * animationProgress);
       }
+      modelRef.current.rotation.y += 0.005;
     }
   });
 
@@ -151,9 +197,13 @@ function ARDishModel({
 
   return (
     <group ref={modelRef} scale={0}>
-      {clonedModel.current && (
-        <primitive object={clonedModel.current} />
-      )}
+      <ModelErrorBoundary fallback={<FallbackDishMesh color={color} />}>
+        {hasValidPath ? (
+          <DishModelMesh modelPath={modelPath} />
+        ) : (
+          <FallbackDishMesh color={color} />
+        )}
+      </ModelErrorBoundary>
       <pointLight color={color} intensity={0.8} distance={3} position={[0, 0.5, 0]} />
       <mesh position={[0, 0.01, 0]} rotation-x={-Math.PI / 2} receiveShadow>
         <circleGeometry args={[0.3, 32]} />
@@ -215,27 +265,11 @@ function ARScene({ dish }: { dish: any }) {
 }
 
 function FallbackViewer({ dish }: { dish: any }) {
-  const gltf = useGLTF(dish.modelPath);
-  const clonedModel = useRef<THREE.Group | null>(null);
+  const hasValidPath = dish.modelPath && dish.modelPath.trim() !== '';
   
   const color = dish.emoji === '🔥' ? '#EF4444' : 
                 dish.emoji === '🍫' ? '#F9A8D4' :
                 dish.emoji === '🍹' ? '#67E8F9' : '#6EE7B7';
-
-  useEffect(() => {
-    const scene = Array.isArray(gltf) ? gltf[0]?.scene : gltf?.scene;
-    if (scene && !clonedModel.current) {
-      clonedModel.current = scene.clone();
-      if (clonedModel.current) {
-        clonedModel.current.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-      }
-    }
-  }, [gltf]);
 
   return (
     <>
@@ -244,9 +278,15 @@ function FallbackViewer({ dish }: { dish: any }) {
       <pointLight position={[-5, 5, -5]} intensity={0.5} />
       <spotLight position={[0, 5, 0]} intensity={0.5} color={color} />
       
-      {clonedModel.current && (
-        <primitive object={clonedModel.current} scale={2.5} />
-      )}
+      <group scale={2.5}>
+        <ModelErrorBoundary key={dish.modelPath} fallback={<FallbackDishMesh color={color} />}>
+          {hasValidPath ? (
+            <DishModelMesh modelPath={dish.modelPath} />
+          ) : (
+            <FallbackDishMesh color={color} />
+          )}
+        </ModelErrorBoundary>
+      </group>
       
       <OrbitControls enableZoom={true} enablePan={false} />
     </>
@@ -323,15 +363,24 @@ export function ARScreen() {
   const handleARStart = () => {
     trigger('medium');
     setARStatus('active');
-    try {
-      xrStore.enterAR();
-      console.log('Entering AR mode...');
-    } catch (error) {
-      console.error('Error starting AR:', error);
-      setARStatus('error');
-      setErrorMessage('Failed to start AR session. Please try again.');
-    }
   };
+
+  useEffect(() => {
+    if (arStatus === 'active') {
+      const timer = setTimeout(() => {
+        try {
+          xrStore.enterAR();
+          console.log('Entering AR mode...');
+        } catch (error) {
+          console.error('Error starting AR:', error);
+          setARStatus('error');
+          setErrorMessage('Failed to start AR session. Please try again.');
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [arStatus]);
 
   if (!selectedDish) return null;
 
@@ -404,7 +453,15 @@ export function ARScreen() {
         </button>
       </div>
 
-      {isARSupported && arStatus === 'ready' ? (
+      {arStatus === 'active' ? (
+        <Canvas onCreated={() => setModelLoading(false)}>
+          <XR store={xrStore}>
+            <Suspense fallback={null}>
+              <ARScene dish={selectedDish} />
+            </Suspense>
+          </XR>
+        </Canvas>
+      ) : isARSupported && arStatus === 'ready' ? (
         <>
           <motion.button
             onClick={handleARStart}
@@ -417,12 +474,10 @@ export function ARScreen() {
             🚀 Start AR Experience
           </motion.button>
 
-          <Canvas onCreated={() => setModelLoading(false)}>
-            <XR store={xrStore}>
-              <Suspense fallback={null}>
-                <ARScene dish={selectedDish} />
-              </Suspense>
-            </XR>
+          <Canvas camera={{ position: [0, 0, 3], fov: 50 }} onCreated={() => setModelLoading(false)}>
+            <Suspense fallback={null}>
+              <FallbackViewer dish={selectedDish} />
+            </Suspense>
           </Canvas>
           
           {modelLoading && (
@@ -434,14 +489,6 @@ export function ARScreen() {
             </div>
           )}
         </>
-      ) : arStatus === 'active' ? (
-        <Canvas onCreated={() => setModelLoading(false)}>
-          <XR store={xrStore}>
-            <Suspense fallback={null}>
-              <ARScene dish={selectedDish} />
-            </Suspense>
-          </XR>
-        </Canvas>
       ) : arStatus === 'error' ? (
         <div className="h-full flex flex-col">
           <div className="flex-1">

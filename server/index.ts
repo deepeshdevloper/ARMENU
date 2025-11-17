@@ -59,11 +59,21 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
   const port = 5000;
-  server.listen({
+  const isWindows = process.platform === 'win32';
+  
+  const serverOptions = {
     port,
     host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+    // reusePort is not supported on Windows
+    ...(!isWindows && { reusePort: true })
+  };
+
+  server.listen(serverOptions, () => {
+    const localUrl = `http://localhost:${port}`;
+    log(`Server is running at: ${localUrl}`);
+    log(`Open in browser: ${localUrl}`);
+    if (isWindows) {
+      log('Running on Windows - reusePort disabled');
+    }
   });
 })();
