@@ -3,8 +3,9 @@ import type { CSSProperties, DetailedHTMLProps, HTMLAttributes } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
-import { ChevronLeft, RotateCw, Video } from "lucide-react";
+import { ChevronLeft, RotateCw, Video, Scan } from "lucide-react";
 import { WebcamARViewer } from "./WebcamARViewer";
+import { ARTableDetection } from "./ARTableDetection";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 
 declare global {
@@ -40,9 +41,8 @@ const MODEL_VIEWER_SCRIPT_ID = "model-viewer-script";
 export function ARScreen() {
   const { selectedDish, setScreen } = useARMenu();
   const [infoVisible, setInfoVisible] = useState(true);
-  const [modelLoading, setModelLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
   const [showWebcamViewer, setShowWebcamViewer] = useState(false);
+  const [showTableDetection, setShowTableDetection] = useState(false);
   const { trigger } = useHaptics();
   const modelViewerRef = useRef<HTMLElement>(null);
   const isMobile = useIsMobile();
@@ -63,8 +63,6 @@ export function ARScreen() {
 
       script.onerror = () => {
         console.error("Failed to load model-viewer script");
-        setHasError(true);
-        setModelLoading(false);
       };
 
       document.head.appendChild(script);
@@ -81,62 +79,17 @@ export function ARScreen() {
     };
   }, [trigger]);
 
-  useEffect(() => {
-    const loadTimeout = setTimeout(() => {
-      console.log("Auto-clearing loading state after timeout");
-      setModelLoading(false);
-    }, 3000);
-
-    const modelViewer = modelViewerRef.current;
-    if (modelViewer) {
-      const handleLoad = () => {
-        console.log("Model loaded successfully");
-        setModelLoading(false);
-        setHasError(false);
-        trigger("medium");
-      };
-
-      const handleError = (event: any) => {
-        console.error("Model loading error:", event);
-        setModelLoading(false);
-        setHasError(true);
-      };
-
-      const handleProgress = (event: any) => {
-        const { totalProgress } = event.detail;
-        if (totalProgress === 1) {
-          setModelLoading(false);
-        }
-      };
-
-      modelViewer.addEventListener("load", handleLoad);
-      modelViewer.addEventListener("error", handleError);
-      modelViewer.addEventListener("progress", handleProgress);
-
-      return () => {
-        console.log('Cleaning up model-viewer');
-        modelViewer.removeEventListener("load", handleLoad);
-        modelViewer.removeEventListener("error", handleError);
-        modelViewer.removeEventListener("progress", handleProgress);
-        
-        try {
-          if (typeof (modelViewer as any).pause === 'function') {
-            (modelViewer as any).pause();
-          }
-        } catch (error) {
-          console.error('Error pausing model-viewer:', error);
-        }
-        
-        clearTimeout(loadTimeout);
-      };
-    }
-
-    return () => {
-      clearTimeout(loadTimeout);
-    };
-  }, [trigger]);
 
   if (!selectedDish) return null;
+
+  if (showTableDetection) {
+    return (
+      <ARTableDetection 
+        modelPath={selectedDish.modelPath}
+        onClose={() => setShowTableDetection(false)}
+      />
+    );
+  }
 
   if (showWebcamViewer && !isMobile) {
     return (
@@ -204,6 +157,13 @@ export function ARScreen() {
 
       <div className="absolute bottom-6 right-6 z-40 flex flex-col gap-2">
         <button
+          onClick={() => setShowTableDetection(true)}
+          className="p-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 backdrop-blur-md text-white hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg"
+          title="AR Table Detection"
+        >
+          <Scan size={20} />
+        </button>
+        <button
           onClick={() => setInfoVisible(!infoVisible)}
           className="p-3 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-colors"
         >
@@ -211,31 +171,6 @@ export function ARScreen() {
         </button>
       </div>
 
-      {modelLoading && !hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-30">
-          <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-6 text-center">
-            <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-white">Loading 3D model...</p>
-            <p className="text-white/60 text-sm mt-1">
-              Preparing AR experience
-            </p>
-          </div>
-        </div>
-      )}
-
-      {hasError && (
-        <div className="absolute bottom-24 left-0 right-0 z-40 px-6">
-          <div className="bg-red-500/90 backdrop-blur-xl border border-red-300/20 rounded-2xl p-4 text-center">
-            <p className="text-white font-semibold mb-1">
-              ⚠️ Model Loading Error
-            </p>
-            <p className="text-white/80 text-sm">
-              Unable to load the 3D model. The AR viewer may still work with
-              touch controls.
-            </p>
-          </div>
-        </div>
-      )}
 
       {isMobile ? (
         <model-viewer
@@ -311,7 +246,7 @@ export function ARScreen() {
               }}
             />
           )}
-          
+
           <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-6">
             <motion.button
               onClick={() => {

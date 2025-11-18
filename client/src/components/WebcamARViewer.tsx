@@ -7,12 +7,12 @@ import { motion } from "framer-motion";
 function Model({ 
   modelPath, 
   scale = 2.5, 
-  rotation = 0,
+  rotation = { x: 0, y: 0 },
   autoRotate = true
 }: { 
   modelPath: string; 
   scale?: number;
-  rotation?: number;
+  rotation?: { x: number; y: number };
   autoRotate?: boolean;
 }) {
   const { scene } = useGLTF(modelPath);
@@ -23,7 +23,8 @@ function Model({
       if (autoRotate) {
         modelRef.current.rotation.y += 0.005;
       } else {
-        modelRef.current.rotation.y = rotation;
+        modelRef.current.rotation.x = rotation.x;
+        modelRef.current.rotation.y = rotation.y;
       }
     }
   });
@@ -47,10 +48,12 @@ export function WebcamARViewer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
   const [isPlaced, setIsPlaced] = useState(false);
   const [modelScale, setModelScale] = useState(2.5);
-  const [modelRotation, setModelRotation] = useState(0);
+  const [modelRotation, setModelRotation] = useState({ x: 0, y: 0 });
+  const [mouseStart, setMouseStart] = useState<{ x: number; y: number } | null>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -80,7 +83,7 @@ export function WebcamARViewer({
           videoRef.current.onloadedmetadata = () => {
             if (mounted) {
               videoRef.current?.play();
-              setLoading(false);
+              setCameraReady(true);
               console.log("Webcam video playing");
             }
           };
@@ -89,7 +92,7 @@ export function WebcamARViewer({
         console.error("Webcam access error:", err);
         if (mounted) {
           setError(err.message || "Failed to access webcam");
-          setLoading(false);
+          setCameraReady(false);
         }
       }
     };
@@ -125,11 +128,32 @@ export function WebcamARViewer({
             setModelScale(prev => Math.max(0.5, Math.min(10, prev + delta)));
           }
         }}
-        onMouseMove={(e) => {
-          if (isPlaced && e.buttons === 1) {
-            const delta = e.movementX * 0.01;
-            setModelRotation(prev => prev + delta);
+        onMouseDown={(e) => {
+          if (isPlaced) {
+            setIsMouseDown(true);
+            setMouseStart({ x: e.clientX, y: e.clientY });
           }
+        }}
+        onMouseMove={(e) => {
+          if (isPlaced && isMouseDown && mouseStart) {
+            const deltaX = e.clientX - mouseStart.x;
+            const deltaY = e.clientY - mouseStart.y;
+
+            setModelRotation((prev) => ({
+              x: prev.x - deltaY * 0.01,
+              y: prev.y + deltaX * 0.01,
+            }));
+
+            setMouseStart({ x: e.clientX, y: e.clientY });
+          }
+        }}
+        onMouseUp={() => {
+          setIsMouseDown(false);
+          setMouseStart(null);
+        }}
+        onMouseLeave={() => {
+          setIsMouseDown(false);
+          setMouseStart(null);
         }}
       >
         <Canvas
@@ -193,17 +217,6 @@ export function WebcamARViewer({
         </svg>
       </button>
 
-      {loading && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-40 pointer-events-auto">
-          <div className="bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 text-center max-w-sm">
-            <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-white font-semibold mb-2">Starting camera...</p>
-            <p className="text-white/60 text-sm">
-              Please allow camera access to view the 3D model in your space
-            </p>
-          </div>
-        </div>
-      )}
 
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-40 pointer-events-auto">
@@ -224,7 +237,7 @@ export function WebcamARViewer({
         </div>
       )}
 
-      {!loading && !error && !isPlaced && (
+      {cameraReady && !error && !isPlaced && (
         <motion.div
           className="absolute bottom-6 left-0 right-0 z-40 px-6 pointer-events-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -248,7 +261,7 @@ export function WebcamARViewer({
         </motion.div>
       )}
 
-      {!loading && !error && isPlaced && (
+      {cameraReady && !error && isPlaced && (
         <motion.div
           className="absolute bottom-6 left-0 right-0 z-40 px-6 pointer-events-auto"
           initial={{ opacity: 0, y: 20 }}
@@ -259,7 +272,7 @@ export function WebcamARViewer({
               ✨ Dish Placed!
             </p>
             <p className="text-white/70 text-xs">
-              • Drag to rotate<br/>
+              • Drag to rotate 360° on all axes<br/>
               • Scroll to zoom
             </p>
           </div>

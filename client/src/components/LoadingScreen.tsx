@@ -1,11 +1,38 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useARMenu } from "@/lib/stores/useARMenu";
+import { useGLTF } from "@react-three/drei";
+import menuJson from "@/data/menu.json";
+
+const MODEL_PATHS = [
+  "/models/categories/breads.glb",
+  "/models/categories/chole.glb",
+  "/models/categories/dal.glb",
+  "/models/categories/desserts.glb",
+  "/models/categories/kaju.glb",
+  "/models/categories/kofta.glb",
+  "/models/categories/mushroom.glb",
+  "/models/categories/paneer.glb",
+  "/models/categories/rice.glb",
+  "/models/categories/salads.glb",
+  "/models/categories/vegetables.glb",
+  "/models/dishes/butter-naan.glb",
+  "/models/dishes/butter-paneer-masala.glb",
+  "/models/dishes/dal-makhani.glb",
+  "/models/dishes/dal-tadka.glb",
+  "/models/dishes/garlic-naan.glb",
+  "/models/dishes/gulab-jamun.glb",
+  "/models/dishes/kadhai-paneer.glb",
+  "/models/dishes/malai-kofta.glb",
+  "/models/dishes/palak-paneer.glb",
+  "/models/dishes/veg-biryani.glb",
+];
 
 export function LoadingScreen() {
   const [showSecondLine, setShowSecondLine] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [modelsLoaded, setModelsLoaded] = useState(0);
   
   useEffect(() => {
     const updateDimensions = () => {
@@ -32,36 +59,42 @@ export function LoadingScreen() {
   }, [dimensions]);
 
   useEffect(() => {
-    console.log('LoadingScreen: Component mounted, starting transition');
+    console.log('LoadingScreen: Component mounted, starting model preload');
     let mounted = true;
     
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) return 100;
-        return prev + Math.random() * 15;
-      });
-    }, 200);
-
     setTimeout(() => {
       if (mounted) {
         console.log('LoadingScreen: Showing second line');
         setShowSecondLine(true);
       }
-    }, 1500);
+    }, 300);
 
-    setTimeout(() => {
-      if (mounted) {
-        console.log('LoadingScreen: Setting progress to 100');
-        setProgress(100);
+    console.log(`LoadingScreen: Preloading ${MODEL_PATHS.length} models...`);
+    MODEL_PATHS.forEach(path => {
+      useGLTF.preload(path);
+    });
+
+    let loadedCount = 0;
+    const progressInterval = setInterval(() => {
+      if (!mounted) return;
+      
+      loadedCount++;
+      const currentProgress = Math.min((loadedCount / MODEL_PATHS.length) * 100, 100);
+      setProgress(currentProgress);
+      setModelsLoaded(loadedCount);
+      
+      if (loadedCount >= MODEL_PATHS.length) {
+        clearInterval(progressInterval);
+        console.log('LoadingScreen: All models preloaded!');
+        
+        setTimeout(() => {
+          if (mounted) {
+            console.log('LoadingScreen: Transitioning to categories screen');
+            useARMenu.getState().setScreen("categories");
+          }
+        }, 300);
       }
-    }, 2500);
-    
-    setTimeout(() => {
-      if (mounted) {
-        console.log('LoadingScreen: Transitioning to categories screen NOW');
-        useARMenu.getState().setScreen("categories");
-      }
-    }, 3000);
+    }, 100);
 
     return () => {
       console.log('LoadingScreen: Cleanup called');
