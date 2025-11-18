@@ -19,11 +19,32 @@ export default defineConfig({
       "@": path.resolve(__dirname, "client", "src"),
       "@shared": path.resolve(__dirname, "shared"),
     },
+    dedupe: ['three', '@react-three/fiber', '@react-three/drei'],
   },
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+        },
+      },
+    },
+  },
+  server: {
+    host: "0.0.0.0",
+    port: 5000,
+    strictPort: true,
+    hmr: {
+      clientPort: 443,
+      port: 5000,
+    },
+  },
+  optimizeDeps: {
+    include: ['three', '@react-three/fiber', '@react-three/drei'],
+    exclude: [],
   },
   // Add support for large models and audio files
   assetsInclude: ["**/*.gltf", "**/*.glb", "**/*.mp3", "**/*.ogg", "**/*.wav"],
