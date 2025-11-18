@@ -85,10 +85,16 @@ function LoadedModel({ modelPath, isHovered, isSelected, isMobile, onLoad }: {
     }
   }, [scene, modelPath, onLoad]);
   
+  useEffect(() => {
+    if (modelRef.current) {
+      modelRef.current.rotation.x = -Math.PI / 2;
+    }
+  }, []);
+  
   useFrame((state) => {
     if (modelRef.current) {
       const rotationSpeed = isHovered || isSelected ? 0.02 : 0.01;
-      modelRef.current.rotation.y += rotationSpeed;
+      modelRef.current.rotation.z += rotationSpeed;
     }
   });
 
@@ -143,8 +149,17 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
   const opacity = isSelected ? 1 : isHovered ? 1 : 0.85;
   const modelPath = categoryModelMap[category.id];
   
-  const ringSize = isMobile ? 2.2 : 3.0;
-  const ringThickness = isMobile ? 0.18 : 0.22;
+  const ringSize = (() => {
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      if (width < 640) return 1.8;
+      if (width < 768) return 2.2;
+      if (width < 1024) return 2.6;
+    }
+    return 3.0;
+  })();
+  
+  const ringThickness = ringSize * 0.08;
 
   return (
     <group 
@@ -190,7 +205,7 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
       <Suspense fallback={null}>
         <Text
           position={[0, -1.5, 0]}
-          fontSize={isMobile ? 0.22 : 0.28}
+          fontSize={isMobile ? 0.20 : 0.28}
           color="white"
           anchorX="center"
           anchorY="middle"
@@ -216,7 +231,7 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, ca
   const groupRef = useRef<THREE.Group>(null);
 
   const positions = useMemo(() => {
-    const spacing = isMobile ? 6.5 : 7.5;
+    const spacing = isMobile ? 5.8 : 7.5;
     const numRings = categories.length;
     const startX = -spacing * (numRings - 1) / 2;
     
@@ -292,10 +307,17 @@ export function CategoryRingsScreen() {
   const totalPages = Math.ceil(categories.length / RINGS_PER_PAGE);
 
   const cameraConfig = useMemo(() => {
-    return {
-      position: [0, 0, isMobile ? 14 : 12] as [number, number, number],
-      fov: isMobile ? 65 : 60
-    };
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      if (width < 640) {
+        return { position: [0, 0, 15] as [number, number, number], fov: 70 };
+      } else if (width < 768) {
+        return { position: [0, 0, 13] as [number, number, number], fov: 65 };
+      } else if (width < 1024) {
+        return { position: [0, 0, 12] as [number, number, number], fov: 62 };
+      }
+    }
+    return { position: [0, 0, 12] as [number, number, number], fov: 60 };
   }, [isMobile]);
 
   const visibleCategoryIds = useMemo(() => {
@@ -425,30 +447,30 @@ export function CategoryRingsScreen() {
       
       {carouselPage > 0 && (
         <motion.button
-          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
+          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
           onClick={handlePrevPage}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </motion.button>
       )}
       
       {carouselPage < totalPages - 1 && (
         <motion.button
-          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
           onClick={handleNextPage}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
         >
-          <ChevronRight size={24} />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </motion.button>
       )}
       
-      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center safe-bottom pb-6 sm:pb-10 md:pb-14 pointer-events-none px-2 sm:px-4 gap-4">
-        <div className="flex gap-2 pointer-events-auto">
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center safe-bottom pb-4 sm:pb-8 md:pb-12 pointer-events-none px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4">
+        <div className="flex gap-1.5 sm:gap-2 pointer-events-auto">
           {Array.from({ length: totalPages }).map((_, index) => (
             <button
               key={index}
@@ -456,17 +478,17 @@ export function CategoryRingsScreen() {
                 setCarouselPage(index);
                 trigger('light');
               }}
-              className={`h-2 rounded-full transition-all ${
+              className={`h-1.5 sm:h-2 rounded-full transition-all ${
                 index === carouselPage 
-                  ? 'w-8 bg-white' 
-                  : 'w-2 bg-white/40 hover:bg-white/60'
+                  ? 'w-6 sm:w-8 bg-white' 
+                  : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/60'
               }`}
             />
           ))}
         </div>
         
         <div className="w-full max-w-6xl pointer-events-auto overflow-hidden">
-          <div className="flex gap-2 sm:gap-3 md:gap-4 justify-center px-2 pb-2">
+          <div className="flex gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 justify-center px-1 sm:px-2 pb-1 sm:pb-2">
             {categories
               .slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)
               .map((category) => (
@@ -482,8 +504,8 @@ export function CategoryRingsScreen() {
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   onClick={() => handleSelect(category)}
                 >
-                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
-                    <p className="text-white text-xs sm:text-sm md:text-base font-semibold tracking-wide whitespace-nowrap">
+                  <div className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
+                    <p className="text-white text-[10px] sm:text-xs md:text-sm lg:text-base font-semibold tracking-wide whitespace-nowrap">
                       {category.emoji} {category.name}
                     </p>
                   </div>
@@ -494,7 +516,7 @@ export function CategoryRingsScreen() {
       </div>
       
       <motion.div
-        className="absolute top-4 sm:top-6 left-0 right-0 text-center safe-top px-4"
+        className="absolute top-2 sm:top-4 md:top-6 left-0 right-0 text-center safe-top px-2 sm:px-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -510,11 +532,11 @@ export function CategoryRingsScreen() {
           }}
           className="inline-block"
         >
-          <div className="bg-gradient-to-r from-orange-600/30 via-green-600/30 to-amber-600/30 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/20 shadow-lg">
-            <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1">
+          <div className="bg-gradient-to-r from-orange-600/30 via-green-600/30 to-amber-600/30 backdrop-blur-md rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 border border-white/20 shadow-lg">
+            <h1 className="text-white text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold tracking-tight mb-0.5 sm:mb-1">
               🙏 स्वागत है बापू की कुटिया में
             </h1>
-            <p className="text-white/90 text-xs sm:text-sm font-medium">
+            <p className="text-white/90 text-[10px] sm:text-xs md:text-sm font-medium">
               Welcome to Bapu Ki Kutiya • Roshanpura, Bhopal
             </p>
           </div>

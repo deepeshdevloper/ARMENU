@@ -110,7 +110,7 @@ export function WebcamARViewer({
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black">
+    <div className="fixed inset-0 w-full h-full bg-black overflow-hidden">
       <video
         ref={videoRef}
         autoPlay
@@ -200,18 +200,19 @@ export function WebcamARViewer({
 
       <button
         onClick={onClose}
-        className="absolute top-6 left-6 z-50 p-3 rounded-full bg-black/70 backdrop-blur-md text-white hover:bg-black/90 transition-colors pointer-events-auto"
+        className="absolute top-4 sm:top-6 left-4 sm:left-6 z-50 p-2 sm:p-3 rounded-full bg-black/70 backdrop-blur-md text-white hover:bg-black/90 transition-colors pointer-events-auto safe-top safe-left"
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          width="24" 
-          height="24" 
+          width="20" 
+          height="20" 
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 
           strokeWidth="2" 
           strokeLinecap="round" 
           strokeLinejoin="round"
+          className="sm:w-6 sm:h-6"
         >
           <path d="M15 18l-6-6 6-6"/>
         </svg>
@@ -219,17 +220,17 @@ export function WebcamARViewer({
 
 
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-40 pointer-events-auto">
-          <div className="bg-red-500/90 backdrop-blur-xl border border-red-300/20 rounded-2xl p-6 text-center max-w-sm">
-            <p className="text-white font-semibold text-lg mb-2">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-40 pointer-events-auto px-4">
+          <div className="bg-red-500/90 backdrop-blur-xl border border-red-300/20 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center max-w-sm mx-auto">
+            <p className="text-white font-semibold text-base sm:text-lg mb-2">
               ⚠️ Camera Access Error
             </p>
-            <p className="text-white/90 text-sm mb-4">
+            <p className="text-white/90 text-xs sm:text-sm mb-4">
               {error}
             </p>
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-white text-red-600 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+              className="px-4 sm:px-6 py-2 bg-white text-red-600 rounded-full font-semibold hover:bg-gray-100 transition-colors text-sm sm:text-base"
             >
               Go Back
             </button>
@@ -239,13 +240,13 @@ export function WebcamARViewer({
 
       {cameraReady && !error && !isPlaced && (
         <motion.div
-          className="absolute bottom-6 left-0 right-0 z-40 px-6 pointer-events-auto"
+          className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-40 px-4 sm:px-6 pointer-events-auto safe-bottom"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="bg-black/70 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-center max-w-md mx-auto">
-            <p className="text-white text-sm font-semibold mb-2">
+          <div className="bg-black/70 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center max-w-md mx-auto">
+            <p className="text-white text-xs sm:text-sm font-semibold mb-2">
               📍 Click to Place on Table
             </p>
             <p className="text-white/70 text-xs">
@@ -254,7 +255,7 @@ export function WebcamARViewer({
           </div>
           <button
             onClick={() => setIsPlaced(true)}
-            className="mt-4 mx-auto block px-8 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-full transition-colors"
+            className="mt-3 sm:mt-4 mx-auto block px-6 sm:px-8 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-full transition-colors text-sm sm:text-base"
           >
             Place Dish Here
           </button>
@@ -263,12 +264,12 @@ export function WebcamARViewer({
 
       {cameraReady && !error && isPlaced && (
         <motion.div
-          className="absolute bottom-6 left-0 right-0 z-40 px-6 pointer-events-auto"
+          className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-40 px-4 sm:px-6 pointer-events-auto safe-bottom"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="bg-black/70 backdrop-blur-xl border border-white/20 rounded-2xl p-4 text-center max-w-md mx-auto">
-            <p className="text-white text-sm font-semibold mb-1">
+          <div className="bg-black/70 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center max-w-md mx-auto">
+            <p className="text-white text-xs sm:text-sm font-semibold mb-1">
               ✨ Dish Placed!
             </p>
             <p className="text-white/70 text-xs">

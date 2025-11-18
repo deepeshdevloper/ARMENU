@@ -110,41 +110,41 @@ export function ARScreen() {
           : "#6EE7B7";
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
       <button
         onClick={() => setScreen("dishDetail")}
-        className="absolute top-6 left-6 z-50 p-2 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-colors"
+        className="absolute top-4 sm:top-6 left-4 sm:left-6 z-50 p-2 sm:p-3 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-colors safe-top safe-left"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
       </button>
 
       <AnimatePresence>
         {infoVisible && (
           <motion.div
-            className="absolute top-20 left-0 right-0 z-40 px-6"
+            className="absolute top-16 sm:top-20 left-0 right-0 z-40 px-4 sm:px-6 safe-top"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-white font-bold text-lg">
+            <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <h3 className="text-white font-bold text-sm sm:text-base md:text-lg truncate">
                   {selectedDish.emoji} {selectedDish.name}
                 </h3>
-                <span className="text-white/70 text-sm">
+                <span className="text-white/70 text-xs sm:text-sm whitespace-nowrap">
                   {selectedDish.calories} cal
                 </span>
               </div>
-              <p className="text-white/60 text-xs mb-2">
+              <p className="text-white/60 text-xs sm:text-sm mb-2 line-clamp-2">
                 {selectedDish.ingredients.slice(0, 3).join(" • ")}
               </p>
-              <p className="text-green-400 text-xs">
+              <p className="text-green-400 text-xs sm:text-sm">
                 {isMobile 
                   ? "📱 Tap to view in AR - the dish will only appear on detected tables!"
                   : "💻 Click \"View with Camera\" to see it with your webcam!"}
               </p>
               {isMobile && (
-                <p className="text-white/60 text-xs mt-2">
+                <p className="text-white/60 text-xs sm:text-sm mt-2">
                   • Scan for a flat table surface<br/>
                   • Tap to place the dish<br/>
                   • Pinch to zoom, swipe to rotate
@@ -155,19 +155,19 @@ export function ARScreen() {
         )}
       </AnimatePresence>
 
-      <div className="absolute bottom-6 right-6 z-40 flex flex-col gap-2">
+      <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 flex flex-col gap-2 safe-bottom safe-right">
         <button
           onClick={() => setShowTableDetection(true)}
-          className="p-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 backdrop-blur-md text-white hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg"
+          className="p-2.5 sm:p-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500 backdrop-blur-md text-white hover:from-orange-600 hover:to-red-600 transition-colors shadow-lg"
           title="AR Table Detection"
         >
-          <Scan size={20} />
+          <Scan size={18} className="sm:w-5 sm:h-5" />
         </button>
         <button
           onClick={() => setInfoVisible(!infoVisible)}
-          className="p-3 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-colors"
+          className="p-2.5 sm:p-3 rounded-full bg-black/50 backdrop-blur-md text-white hover:bg-black/70 transition-colors"
         >
-          <RotateCw size={20} />
+          <RotateCw size={18} className="sm:w-5 sm:h-5" />
         </button>
       </div>
 
@@ -201,15 +201,17 @@ export function ARScreen() {
             slot="ar-button"
             style={{
               position: "absolute",
-              bottom: "24px",
+              bottom: "16px",
               left: "50%",
               transform: "translateX(-50%)",
               zIndex: 50,
+              width: "calc(100% - 32px)",
+              maxWidth: "400px",
             }}
           >
             <motion.button
               onClick={() => trigger("medium")}
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-base shadow-2xl border-2 border-white/20"
+              className="w-full px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-sm sm:text-base shadow-2xl border-2 border-white/20"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: 20 }}
@@ -247,13 +249,13 @@ export function ARScreen() {
             />
           )}
 
-          <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-6">
+          <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-50 flex justify-center px-4 sm:px-6 safe-bottom">
             <motion.button
               onClick={() => {
                 trigger("medium");
                 setShowWebcamViewer(true);
               }}
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base shadow-2xl border-2 border-white/20 flex items-center gap-2"
+              className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-sm sm:text-base shadow-2xl border-2 border-white/20 flex items-center gap-2 max-w-xs sm:max-w-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: 20 }}
@@ -262,7 +264,7 @@ export function ARScreen() {
                 boxShadow: `0 0 40px ${dishColor}`,
               }}
             >
-              <Video size={20} />
+              <Video size={16} className="sm:w-5 sm:h-5" />
               View with Camera
             </motion.button>
           </div>

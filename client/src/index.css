@@ -26,11 +26,15 @@
     @apply border-border;
   }
 
+  * {
+    box-sizing: border-box;
+  }
+
   body {
     @apply font-sans antialiased;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow-x: hidden;
     width: 100vw;
     height: 100vh;
     height: 100dvh;
@@ -49,11 +53,20 @@
   }
 }
 
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 #root {
   width: 100%;
-  height: 100%;
-  position: fixed;
-  overflow: hidden;
+  min-height: 100%;
+  position: relative;
+}
+
+img, video, canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 canvas {

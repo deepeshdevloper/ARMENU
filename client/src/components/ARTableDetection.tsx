@@ -311,17 +311,17 @@ export function ARTableDetection({
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl text-center max-w-md mx-4">
-          <h3 className="text-white text-xl font-bold mb-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center z-50 overflow-hidden px-4">
+        <div className="bg-white/10 backdrop-blur-lg p-6 sm:p-8 rounded-xl sm:rounded-2xl text-center max-w-md mx-auto">
+          <h3 className="text-white text-lg sm:text-xl font-bold mb-3 sm:mb-4">
             Camera Access Required
           </h3>
-          <p className="text-white/80 mb-6">
+          <p className="text-white/80 mb-4 sm:mb-6 text-sm sm:text-base">
             {error}. Please allow camera access to use AR features.
           </p>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-semibold"
+            className="px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-semibold text-sm sm:text-base"
           >
             Go Back
           </button>
@@ -332,7 +332,7 @@ export function ARTableDetection({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black"
+      className="fixed inset-0 z-50 bg-black overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -369,23 +369,23 @@ export function ARTableDetection({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="absolute top-4 left-4 right-4 z-10"
+        className="absolute top-4 left-4 right-4 z-10 safe-top"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={onClose}
-            className="p-3 bg-white/10 backdrop-blur-lg rounded-full text-white hover:bg-white/20 transition-all shadow-lg"
+            className="p-2 sm:p-3 bg-white/10 backdrop-blur-lg rounded-full text-white hover:bg-white/20 transition-all shadow-lg flex-shrink-0"
           >
-            <X size={24} />
+            <X size={20} className="sm:w-6 sm:h-6" />
           </button>
 
           {dishPosition && (
             <button
               onClick={handleReset}
-              className="p-3 bg-white/10 backdrop-blur-lg rounded-full text-white hover:bg-white/20 transition-all flex items-center gap-2 shadow-lg"
+              className="p-2 sm:p-3 bg-white/10 backdrop-blur-lg rounded-full text-white hover:bg-white/20 transition-all flex items-center gap-1.5 sm:gap-2 shadow-lg"
             >
-              <RotateCw size={20} />
-              <span className="text-sm font-medium">Reset</span>
+              <RotateCw size={16} className="sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-medium">Reset</span>
             </button>
           )}
         </div>
@@ -395,22 +395,22 @@ export function ARTableDetection({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-24 left-4 right-4 z-10"
+          className="absolute bottom-20 sm:bottom-24 left-4 right-4 z-10 safe-bottom"
         >
-          <div className="bg-gradient-to-r from-orange-500/90 to-red-500/90 backdrop-blur-lg p-6 rounded-2xl text-white text-center shadow-2xl">
+          <div className="bg-gradient-to-r from-orange-500/90 to-red-500/90 backdrop-blur-lg p-4 sm:p-6 rounded-xl sm:rounded-2xl text-white text-center shadow-2xl max-w-md mx-auto">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-              <p className="font-bold text-lg">Table Detected</p>
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse" />
+              <p className="font-bold text-base sm:text-lg">Table Detected</p>
             </div>
-            <p className="text-sm text-white/90 mb-4">
+            <p className="text-xs sm:text-sm text-white/90 mb-3 sm:mb-4">
               Point your camera at a flat surface. The golden grid shows where
               the dish will be placed.
             </p>
             <button
               onClick={handlePlacement}
-              className="px-8 py-4 bg-white text-orange-600 rounded-xl font-bold text-lg hover:bg-white/90 transition-all shadow-lg flex items-center gap-2 mx-auto"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-orange-600 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg hover:bg-white/90 transition-all shadow-lg flex items-center gap-2 mx-auto"
             >
-              <Check size={24} />
+              <Check size={20} className="sm:w-6 sm:h-6" />
               Place Dish Here
             </button>
           </div>
@@ -421,42 +421,43 @@ export function ARTableDetection({
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute bottom-8 left-4 right-4 z-10"
+          className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 right-4 z-10 safe-bottom"
         >
-          <div className="bg-white/10 backdrop-blur-lg p-4 rounded-2xl shadow-2xl">
-            <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="bg-white/10 backdrop-blur-lg p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl max-w-xl mx-auto">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
               <button
                 onClick={handleZoomOut}
-                className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg"
+                className="p-2 sm:p-2.5 md:p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg flex-shrink-0"
               >
-                <ZoomOut size={24} />
+                <ZoomOut size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
               </button>
 
-              <div className="flex-1 text-center">
-                <p className="text-white font-semibold text-sm mb-1">
+              <div className="flex-1 text-center min-w-0">
+                <p className="text-white font-semibold text-xs sm:text-sm mb-1">
                   🎯 Dish Placed!
                 </p>
-                <p className="text-white/70 text-xs">
-                  • Drag to rotate 360° on all axes
-                  <br />
-                  • Scroll wheel to zoom
-                  <br />• Buttons below for precise control
+                <p className="text-white/70 text-xs leading-relaxed">
+                  • Drag to rotate 360°
+                  <br className="hidden sm:inline" />
+                  <span className="hidden sm:inline"> • </span>Scroll to zoom
+                  <br className="hidden sm:inline" />
+                  <span className="hidden sm:inline"> • </span>Buttons for control
                 </p>
               </div>
 
               <button
                 onClick={handleZoomIn}
-                className="p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg"
+                className="p-2 sm:p-2.5 md:p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg flex-shrink-0"
               >
-                <ZoomIn size={24} />
+                <ZoomIn size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
               </button>
             </div>
 
-            <div className="bg-white/5 rounded-lg p-3 text-center">
+            <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
               <p className="text-white/60 text-xs mb-1">
                 Scale: {scale.toFixed(1)}x
               </p>
-              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+              <div className="h-1.5 sm:h-2 bg-white/20 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all"
                   style={{ width: `${((scale - 0.5) / 4.5) * 100}%` }}
