@@ -9,6 +9,8 @@ import "@fontsource/inter";
 
 function App() {
   const currentScreen = useARMenu(state => state.currentScreen);
+  
+  console.log('App: Current screen is', currentScreen);
 
   return (
     <div className="w-full h-full">

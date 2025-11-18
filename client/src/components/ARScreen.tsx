@@ -261,28 +261,6 @@ export function ARScreen() {
             📱 View in your space
           </motion.button>
         </div>
-
-        <div
-          slot="progress-bar"
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 20,
-          }}
-        >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              border: "4px solid rgba(255,255,255,0.2)",
-              borderTop: "4px solid white",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-            }}
-          />
-        </div>
       </model-viewer>
 
       <style>{`

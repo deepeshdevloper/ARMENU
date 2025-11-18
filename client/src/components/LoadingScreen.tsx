@@ -6,7 +6,6 @@ export function LoadingScreen() {
   const [showSecondLine, setShowSecondLine] = useState(false);
   const [progress, setProgress] = useState(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const setScreen = useARMenu(state => state.setScreen);
   
   useEffect(() => {
     const updateDimensions = () => {
@@ -33,6 +32,9 @@ export function LoadingScreen() {
   }, [dimensions]);
 
   useEffect(() => {
+    console.log('LoadingScreen: Component mounted, starting transition');
+    let mounted = true;
+    
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) return 100;
@@ -40,21 +42,33 @@ export function LoadingScreen() {
       });
     }, 200);
 
-    const timer1 = setTimeout(() => {
-      setShowSecondLine(true);
+    setTimeout(() => {
+      if (mounted) {
+        console.log('LoadingScreen: Showing second line');
+        setShowSecondLine(true);
+      }
     }, 1500);
 
-    const timer2 = setTimeout(() => {
-      setProgress(100);
-      setTimeout(() => setScreen("categories"), 400);
+    setTimeout(() => {
+      if (mounted) {
+        console.log('LoadingScreen: Setting progress to 100');
+        setProgress(100);
+      }
     }, 2500);
+    
+    setTimeout(() => {
+      if (mounted) {
+        console.log('LoadingScreen: Transitioning to categories screen NOW');
+        useARMenu.getState().setScreen("categories");
+      }
+    }, 3000);
 
     return () => {
+      console.log('LoadingScreen: Cleanup called');
+      mounted = false;
       clearInterval(progressInterval);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
     };
-  }, [setScreen]);
+  }, []);
 
   return (
     <div className="fixed inset-0 w-full h-full flex items-center justify-center overflow-hidden">
