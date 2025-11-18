@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Text } from "@react-three/drei";
+import { OrbitControls, useGLTF, Text, Html } from "@react-three/drei";
 import { Suspense, useRef, useState, useMemo, useEffect, memo } from "react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import * as THREE from "three";
@@ -18,12 +18,25 @@ const categoryModelMap: Record<string, string> = menuJson.categories.reduce((acc
   return acc;
 }, {});
 
-function DishModel({ modelPath, isHovered, isSelected, isMobile }: { 
+function LoadingPlaceholder() {
+  return (
+    <Html center>
+      <div className="flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    </Html>
+  );
+}
+
+function DishModel({ modelPath, isHovered, isSelected, isMobile, shouldLoad }: { 
   modelPath: string | undefined; 
   isHovered: boolean;
   isSelected: boolean;
   isMobile: boolean;
+  shouldLoad: boolean;
 }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  
   if (!modelPath) {
     return (
       <mesh>
@@ -33,8 +46,44 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
     );
   }
   
+  if (!shouldLoad) {
+    return (
+      <mesh>
+        <sphereGeometry args={[0.6, 32, 32]} />
+        <meshStandardMaterial color="#444444" emissive="#444444" emissiveIntensity={0.2} />
+      </mesh>
+    );
+  }
+  
+  return (
+    <Suspense fallback={<LoadingPlaceholder />}>
+      <LoadedModel 
+        modelPath={modelPath} 
+        isHovered={isHovered} 
+        isSelected={isSelected} 
+        isMobile={isMobile}
+        onLoad={() => setIsLoaded(true)}
+      />
+    </Suspense>
+  );
+}
+
+function LoadedModel({ modelPath, isHovered, isSelected, isMobile, onLoad }: {
+  modelPath: string;
+  isHovered: boolean;
+  isSelected: boolean;
+  isMobile: boolean;
+  onLoad: () => void;
+}) {
   const { scene } = useGLTF(modelPath);
   const modelRef = useRef<THREE.Group>(null);
+  
+  useEffect(() => {
+    if (scene) {
+      onLoad();
+      console.log(`Model loaded: ${modelPath}`);
+    }
+  }, [scene, modelPath, onLoad]);
   
   useFrame((state) => {
     if (modelRef.current) {
@@ -54,13 +103,14 @@ function DishModel({ modelPath, isHovered, isSelected, isMobile }: {
   );
 }
 
-function DonutRing({ category, position, isSelected, onClick, isMobile, totalCategories }: { 
+function DonutRing({ category, position, isSelected, onClick, isMobile, totalCategories, shouldLoadModel }: { 
   category: Category; 
   position: [number, number, number];
   isSelected: boolean;
   onClick: () => void;
   isMobile: boolean;
   totalCategories: number;
+  shouldLoadModel: boolean;
 }) {
   const ringRef = useRef<THREE.Mesh>(null);
   const circleRef = useRef<THREE.Mesh>(null);
@@ -129,14 +179,13 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
         />
       </mesh>
       
-      <Suspense fallback={null}>
-        <DishModel 
-          modelPath={modelPath} 
-          isHovered={isHovered}
-          isSelected={isSelected}
-          isMobile={isMobile}
-        />
-      </Suspense>
+      <DishModel 
+        modelPath={modelPath} 
+        isHovered={isHovered}
+        isSelected={isSelected}
+        isMobile={isMobile}
+        shouldLoad={shouldLoadModel}
+      />
       
       <Suspense fallback={null}>
         <Text
@@ -155,13 +204,14 @@ function DonutRing({ category, position, isSelected, onClick, isMobile, totalCat
   );
 }
 
-function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, carouselOffset }: { 
+function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, carouselOffset, visibleCategoryIds }: { 
   selectedCategory: Category | null; 
   onSelect: (cat: Category) => void;
   onVibrate: () => void;
   isMobile: boolean;
   categories: Category[];
   carouselOffset: number;
+  visibleCategoryIds: Set<string>;
 }) {
   const groupRef = useRef<THREE.Group>(null);
 
@@ -200,6 +250,7 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, ca
             }}
             isMobile={isMobile}
             totalCategories={categories.length}
+            shouldLoadModel={visibleCategoryIds.has(category.id)}
           />
         ))}
       </group>
@@ -246,6 +297,59 @@ export function CategoryRingsScreen() {
       fov: isMobile ? 65 : 60
     };
   }, [isMobile]);
+
+  const visibleCategoryIds = useMemo(() => {
+    const currentPageCategories = categories.slice(
+      carouselPage * RINGS_PER_PAGE, 
+      (carouselPage + 1) * RINGS_PER_PAGE
+    );
+    
+    const nextPageCategories = carouselPage < totalPages - 1 
+      ? categories.slice(
+          (carouselPage + 1) * RINGS_PER_PAGE, 
+          (carouselPage + 2) * RINGS_PER_PAGE
+        )
+      : [];
+
+    const visibleIds = new Set<string>();
+    currentPageCategories.forEach(cat => visibleIds.add(cat.id));
+    nextPageCategories.forEach(cat => visibleIds.add(cat.id));
+    
+    return visibleIds;
+  }, [carouselPage, categories, RINGS_PER_PAGE, totalPages]);
+
+  useEffect(() => {
+    const currentPageCategories = categories.slice(
+      carouselPage * RINGS_PER_PAGE, 
+      (carouselPage + 1) * RINGS_PER_PAGE
+    );
+    
+    const nextPageCategories = carouselPage < totalPages - 1 
+      ? categories.slice(
+          (carouselPage + 1) * RINGS_PER_PAGE, 
+          (carouselPage + 2) * RINGS_PER_PAGE
+        )
+      : [];
+
+    currentPageCategories.forEach(cat => {
+      const modelPath = categoryModelMap[cat.id];
+      if (modelPath) {
+        useGLTF.preload(modelPath);
+      }
+    });
+
+    const preloadTimer = setTimeout(() => {
+      nextPageCategories.forEach(cat => {
+        const modelPath = categoryModelMap[cat.id];
+        if (modelPath) {
+          useGLTF.preload(modelPath);
+          console.log(`Preloading next page model: ${modelPath}`);
+        }
+      });
+    }, 1000);
+
+    return () => clearTimeout(preloadTimer);
+  }, [carouselPage, categories, RINGS_PER_PAGE, totalPages]);
 
   const handleSelect = (category: Category) => {
     if (isTransitioning) return;
@@ -313,6 +417,7 @@ export function CategoryRingsScreen() {
               isMobile={isMobile}
               categories={categories.slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)}
               carouselOffset={0}
+              visibleCategoryIds={visibleCategoryIds}
             />
           </Suspense>
         </ThreeCanvas>

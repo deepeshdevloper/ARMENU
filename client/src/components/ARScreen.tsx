@@ -3,7 +3,9 @@ import type { CSSProperties, DetailedHTMLProps, HTMLAttributes } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
-import { ChevronLeft, RotateCw } from "lucide-react";
+import { ChevronLeft, RotateCw, Video } from "lucide-react";
+import { WebcamARViewer } from "./WebcamARViewer";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 declare global {
   namespace JSX {
@@ -40,8 +42,10 @@ export function ARScreen() {
   const [infoVisible, setInfoVisible] = useState(true);
   const [modelLoading, setModelLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showWebcamViewer, setShowWebcamViewer] = useState(false);
   const { trigger } = useHaptics();
   const modelViewerRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let existingScript = document.getElementById(MODEL_VIEWER_SCRIPT_ID);
@@ -134,6 +138,15 @@ export function ARScreen() {
 
   if (!selectedDish) return null;
 
+  if (showWebcamViewer && !isMobile) {
+    return (
+      <WebcamARViewer 
+        modelPath={selectedDish.modelPath}
+        onClose={() => setShowWebcamViewer(false)}
+      />
+    );
+  }
+
   const dishColor =
     selectedDish.emoji === "🔥"
       ? "#EF4444"
@@ -173,8 +186,17 @@ export function ARScreen() {
                 {selectedDish.ingredients.slice(0, 3).join(" • ")}
               </p>
               <p className="text-green-400 text-xs">
-                📱 Tap "View in your space" to see it on your table!
+                {isMobile 
+                  ? "📱 Tap to view in AR - the dish will only appear on detected tables!"
+                  : "💻 Click \"View with Camera\" to see it with your webcam!"}
               </p>
+              {isMobile && (
+                <p className="text-white/60 text-xs mt-2">
+                  • Scan for a flat table surface<br/>
+                  • Tap to place the dish<br/>
+                  • Pinch to zoom, swipe to rotate
+                </p>
+              )}
             </div>
           </motion.div>
         )}
@@ -215,53 +237,102 @@ export function ARScreen() {
         </div>
       )}
 
-      <model-viewer
-        ref={modelViewerRef as any}
-        src={selectedDish.modelPath}
-        alt={`3D model of ${selectedDish.name}`}
-        ar
-        ar-modes="scene-viewer webxr quick-look"
-        camera-controls
-        auto-rotate
-        shadow-intensity="1"
-        exposure="1"
-        camera-orbit="0deg 75deg 2.5m"
-        min-camera-orbit="auto 0deg auto"
-        max-camera-orbit="auto 120deg auto"
-        field-of-view="30deg"
-        interaction-prompt="auto"
-        loading="eager"
-        style={{
-          width: "100%",
-          height: "100%",
-          background: "transparent",
-        }}
-      >
-        <div
-          slot="ar-button"
+      {isMobile ? (
+        <model-viewer
+          ref={modelViewerRef as any}
+          src={selectedDish.modelPath}
+          alt={`3D model of ${selectedDish.name}`}
+          ar
+          ar-modes="scene-viewer webxr quick-look"
+          ar-placement="floor"
+          camera-controls
+          auto-rotate
+          shadow-intensity="1"
+          exposure="1"
+          camera-orbit="0deg 75deg 2.5m"
+          min-camera-orbit="auto 0deg auto"
+          max-camera-orbit="auto 120deg auto"
+          field-of-view="30deg"
+          interaction-prompt="auto"
+          loading="eager"
+          disable-zoom="false"
           style={{
-            position: "absolute",
-            bottom: "24px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 50,
+            width: "100%",
+            height: "100%",
+            background: "transparent",
           }}
         >
-          <motion.button
-            onClick={() => trigger("medium")}
-            className="px-8 py-4 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-base shadow-2xl border-2 border-white/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
+            slot="ar-button"
             style={{
-              boxShadow: `0 0 40px ${dishColor}`,
+              position: "absolute",
+              bottom: "24px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 50,
             }}
           >
-            📱 View in your space
-          </motion.button>
-        </div>
-      </model-viewer>
+            <motion.button
+              onClick={() => trigger("medium")}
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-base shadow-2xl border-2 border-white/20"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                boxShadow: `0 0 40px ${dishColor}`,
+              }}
+            >
+              📱 Place on Table (AR)
+            </motion.button>
+          </div>
+        </model-viewer>
+      ) : (
+        <>
+          {!showWebcamViewer && (
+            <model-viewer
+              ref={modelViewerRef as any}
+              src={selectedDish.modelPath}
+              alt={`3D model of ${selectedDish.name}`}
+              camera-controls
+              auto-rotate
+              shadow-intensity="1"
+              exposure="1"
+              camera-orbit="0deg 75deg 2.5m"
+              min-camera-orbit="auto 0deg auto"
+              max-camera-orbit="auto 120deg auto"
+              field-of-view="30deg"
+              interaction-prompt="auto"
+              loading="eager"
+              style={{
+                width: "100%",
+                height: "100%",
+                background: "transparent",
+              }}
+            />
+          )}
+          
+          <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center px-6">
+            <motion.button
+              onClick={() => {
+                trigger("medium");
+                setShowWebcamViewer(true);
+              }}
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold text-base shadow-2xl border-2 border-white/20 flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                boxShadow: `0 0 40px ${dishColor}`,
+              }}
+            >
+              <Video size={20} />
+              View with Camera
+            </motion.button>
+          </div>
+        </>
+      )}
 
       <style>{`
         @keyframes spin {
