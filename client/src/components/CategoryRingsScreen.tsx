@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Text } from "@react-three/drei";
-import { Suspense, useRef, useState, useMemo, useEffect } from "react";
+import { Suspense, useRef, useState, useMemo, useEffect, memo } from "react";
 import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
@@ -218,6 +218,16 @@ function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, ca
   );
 }
 
+const ThreeCanvas = memo(({ children, cameraConfig }: { children: React.ReactNode, cameraConfig: { position: [number, number, number], fov: number } }) => {
+  return (
+    <Canvas camera={{ position: cameraConfig.position, fov: cameraConfig.fov }}>
+      {children}
+    </Canvas>
+  );
+});
+
+ThreeCanvas.displayName = 'ThreeCanvas';
+
 export function CategoryRingsScreen() {
   const selectCategory = useARMenu(state => state.selectCategory);
   const [selectedCat, setSelectedCat] = useState<Category | null>(null);
@@ -294,7 +304,7 @@ export function CategoryRingsScreen() {
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
       >
-        <Canvas camera={{ position: cameraConfig.position, fov: cameraConfig.fov }}>
+        <ThreeCanvas cameraConfig={cameraConfig}>
           <Suspense fallback={null}>
             <Scene 
               selectedCategory={selectedCat} 
@@ -305,7 +315,7 @@ export function CategoryRingsScreen() {
               carouselOffset={0}
             />
           </Suspense>
-        </Canvas>
+        </ThreeCanvas>
       </motion.div>
       
       {carouselPage > 0 && (

@@ -42,7 +42,6 @@ export function ARScreen() {
   const [hasError, setHasError] = useState(false);
   const { trigger } = useHaptics();
   const modelViewerRef = useRef<HTMLElement>(null);
-  const scriptCreatedByThisComponent = useRef(false);
 
   useEffect(() => {
     let existingScript = document.getElementById(MODEL_VIEWER_SCRIPT_ID);
@@ -65,7 +64,6 @@ export function ARScreen() {
       };
 
       document.head.appendChild(script);
-      scriptCreatedByThisComponent.current = true;
     }
 
     trigger("light");
@@ -76,12 +74,6 @@ export function ARScreen() {
 
     return () => {
       clearTimeout(infoTimer);
-      if (scriptCreatedByThisComponent.current) {
-        const script = document.getElementById(MODEL_VIEWER_SCRIPT_ID);
-        if (script && document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      }
     };
   }, [trigger]);
 
@@ -118,9 +110,19 @@ export function ARScreen() {
       modelViewer.addEventListener("progress", handleProgress);
 
       return () => {
+        console.log('Cleaning up model-viewer');
         modelViewer.removeEventListener("load", handleLoad);
         modelViewer.removeEventListener("error", handleError);
         modelViewer.removeEventListener("progress", handleProgress);
+        
+        try {
+          if (typeof (modelViewer as any).pause === 'function') {
+            (modelViewer as any).pause();
+          }
+        } catch (error) {
+          console.error('Error pausing model-viewer:', error);
+        }
+        
         clearTimeout(loadTimeout);
       };
     }
