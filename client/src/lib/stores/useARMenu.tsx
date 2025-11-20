@@ -16,6 +16,8 @@ export type Dish = {
   description: string;
   calories: number;
   ingredients: string[];
+  allergens: string[];
+  videoUrl?: string;
   emoji: string;
   image: string;
   modelPath: string;

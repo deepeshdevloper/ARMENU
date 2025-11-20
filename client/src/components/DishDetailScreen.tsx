@@ -35,7 +35,7 @@ function IngredientHalo({ ingredients }: { ingredients: string[] }) {
     <group ref={groupRef}>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[4, 0.02, 16, 100]} />
-        <meshBasicMaterial color="#D4AF37" transparent opacity={0.4} />
+        <meshBasicMaterial color="#D4AF37" transparent opacity={0.6} />
       </mesh>
 
       {icons.map((item, i) => (
@@ -43,11 +43,11 @@ function IngredientHalo({ ingredients }: { ingredients: string[] }) {
           key={i}
           position={item.position}
           fontSize={0.25}
-          color="#FFD700"
+          color="#D4A64E"
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.02}
-          outlineColor="#000000"
+          outlineColor="#FFFFFF"
         >
           {item.ingredient.slice(0, 8)}
         </Text>
@@ -89,7 +89,7 @@ function FloatingDish({ modelPath }: { modelPath: string }) {
       <mesh ref={plateRef} position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[2.5, 64]} />
         <meshPhysicalMaterial
-          color="#E8E8E8"
+          color="#FAFAF7"
           metalness={0.3}
           roughness={0.2}
           clearcoat={0.8}
@@ -136,23 +136,23 @@ function Scene3D({ modelPath, ingredients }: { modelPath: string; ingredients: s
         autoRotateSpeed={0.5}
       />
 
-      <ambientLight intensity={0.4} color="#ffffff" />
+      <ambientLight intensity={0.9} color="#FFFFFF" />
 
       <spotLight
         position={[5, 10, 5]}
         angle={0.3}
         penumbra={0.5}
-        intensity={1.5}
-        color="#ffffff"
+        intensity={2.0}
+        color="#FFF8E1"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
 
-      <pointLight position={[-5, 5, -5]} intensity={0.8} color="#FF69B4" />
-      <pointLight position={[5, 3, -5]} intensity={0.6} color="#00CED1" />
+      <pointLight position={[-5, 5, -5]} intensity={0.6} color="#FFD700" />
+      <pointLight position={[5, 3, -5]} intensity={0.5} color="#FFFACD" />
 
-      <directionalLight position={[0, 10, 0]} intensity={0.5} color="#FFD700" />
+      <directionalLight position={[0, 10, 0]} intensity={0.8} color="#FFD700" />
 
       <Suspense fallback={null}>
         <FloatingDish modelPath={modelPath} />
@@ -161,7 +161,7 @@ function Scene3D({ modelPath, ingredients }: { modelPath: string; ingredients: s
 
       <mesh position={[0, -0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[20, 20]} />
-        <shadowMaterial opacity={0.3} />
+        <shadowMaterial opacity={0.15} />
       </mesh>
     </>
   );
@@ -188,13 +188,13 @@ export function DishDetailScreen() {
 
   return (
     <motion.div
-      className="fixed inset-0 w-full h-full bg-black overflow-hidden"
+      className="fixed inset-0 w-full h-full bg-white overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-black to-neutral-900" />
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-amber-50" />
 
       <motion.div
         className="absolute inset-0"
@@ -211,13 +211,13 @@ export function DishDetailScreen() {
 
       <motion.button
         onClick={handleBack}
-        className="absolute top-6 left-6 z-50 w-12 h-12 rounded-full bg-gradient-to-br from-yellow-600/20 to-amber-700/20 backdrop-blur-xl border border-yellow-500/30 flex items-center justify-center"
-        whileHover={{ scale: 1.1 }}
+        className="absolute top-6 left-6 z-50 w-12 h-12 rounded-full bg-white backdrop-blur-xl border border-amber-200 shadow-lg flex items-center justify-center"
+        whileHover={{ scale: 1.1, boxShadow: '0 10px 30px rgba(212, 175, 55, 0.2)' }}
         whileTap={{ scale: 0.9 }}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        <ChevronLeft className="w-6 h-6 text-yellow-400" />
+        <ChevronLeft className="w-6 h-6 text-amber-700" />
       </motion.button>
 
       <div className="absolute inset-0 flex flex-col">
@@ -227,13 +227,13 @@ export function DishDetailScreen() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
         >
-          <Canvas shadows>
+          <Canvas shadows style={{ background: 'transparent' }}>
             <Scene3D modelPath={selectedDish.modelPath} ingredients={selectedDish.ingredients} />
           </Canvas>
         </motion.div>
 
         <motion.div
-          className="relative z-10 bg-gradient-to-t from-black via-black/95 to-transparent backdrop-blur-xl px-6 pb-8 pt-12"
+          className="relative z-10 bg-gradient-to-t from-white via-white/98 to-transparent backdrop-blur-xl px-6 pb-8 pt-12 border-t border-amber-200/50"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -241,7 +241,7 @@ export function DishDetailScreen() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-6">
               <motion.h1
-                className="text-4xl font-bold bg-gradient-to-r from-yellow-200 via-amber-400 to-yellow-600 bg-clip-text text-transparent mb-2"
+                className="text-4xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 bg-clip-text text-transparent mb-2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -251,7 +251,7 @@ export function DishDetailScreen() {
               </motion.h1>
 
               <motion.p
-                className="text-gray-300 text-base mb-4"
+                className="text-gray-700 text-base mb-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -260,12 +260,12 @@ export function DishDetailScreen() {
               </motion.p>
 
               <motion.div
-                className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-yellow-600/20 to-amber-700/20 border border-yellow-500/30"
+                className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <span className="text-yellow-400 text-sm font-semibold">{selectedDish.calories} cal</span>
+                <span className="text-amber-700 text-sm font-semibold">{selectedDish.calories} cal</span>
               </motion.div>
             </div>
 
@@ -274,11 +274,11 @@ export function DishDetailScreen() {
               className="w-full py-4 rounded-full font-bold text-white relative overflow-hidden group mb-4"
               style={{
                 background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%)',
-                boxShadow: '0 10px 40px rgba(212, 175, 55, 0.5)',
+                boxShadow: '0 10px 40px rgba(212, 175, 55, 0.4)',
               }}
               whileHover={{ 
                 scale: 1.02,
-                boxShadow: '0 15px 50px rgba(212, 175, 55, 0.7)',
+                boxShadow: '0 15px 50px rgba(212, 175, 55, 0.6)',
               }}
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0, y: 20 }}
@@ -303,12 +303,12 @@ export function DishDetailScreen() {
             </motion.button>
 
             <motion.div
-              className="bg-yellow-600/10 backdrop-blur-sm border border-yellow-500/20 rounded-2xl p-4"
+              className="bg-amber-50/80 backdrop-blur-sm border border-amber-200 rounded-2xl p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
             >
-              <p className="text-yellow-200/80 text-sm text-center">
+              <p className="text-amber-800 text-sm text-center">
                 📱 Mobile: Place on real tables | 💻 Desktop: View with webcam
               </p>
             </motion.div>

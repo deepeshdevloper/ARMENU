@@ -2,9 +2,11 @@ import { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useHaptics } from "@/hooks/useHaptics";
-import { X, ZoomIn, ZoomOut, RotateCw, Check } from "lucide-react";
+import { X, ZoomIn, ZoomOut, RotateCw, Check, ChefHat, AlertTriangle, Play } from "lucide-react";
+import { getDishById } from "@/data/menuData";
+import { useARMenu } from "@/lib/stores/useARMenu";
 
 interface DishModelProps {
   modelPath: string;
@@ -38,13 +40,13 @@ function DishModel({
       <primitive object={clonedScene} />
       {isPlaced && (
         <>
-          <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.3, 0.35, 32]} />
-            <meshBasicMaterial color="#4CAF50" transparent opacity={0.6} />
+          <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.35, 0.4, 32]} />
+            <meshBasicMaterial color="#4CAF50" transparent opacity={0.7} />
           </mesh>
-          <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[0.28, 32]} />
-            <meshBasicMaterial color="#4CAF50" transparent opacity={0.1} />
+          <mesh position={[0, -0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <circleGeometry args={[0.33, 32]} />
+            <meshBasicMaterial color="#4CAF50" transparent opacity={0.15} />
           </mesh>
         </>
       )}
@@ -54,7 +56,7 @@ function DishModel({
 
 function PlacementGrid({ visible }: { visible: boolean }) {
   return visible ? (
-    <group position={[0, -0.5, 0]}>
+    <group position={[0, 0, 0]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[10, 10, 20, 20]} />
         <meshBasicMaterial
@@ -65,12 +67,12 @@ function PlacementGrid({ visible }: { visible: boolean }) {
         />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-        <ringGeometry args={[0.3, 0.35, 32]} />
-        <meshBasicMaterial color="#FFD700" transparent opacity={0.8} />
+        <ringGeometry args={[0.4, 0.45, 32]} />
+        <meshBasicMaterial color="#FFD700" transparent opacity={0.9} />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <circleGeometry args={[0.25, 32]} />
-        <meshBasicMaterial color="#FFD700" transparent opacity={0.2} />
+        <circleGeometry args={[0.35, 32]} />
+        <meshBasicMaterial color="#FFD700" transparent opacity={0.3} />
       </mesh>
     </group>
   ) : null;
@@ -114,11 +116,11 @@ function ARScene({ modelPath, dishPosition, scale, rotation }: ARSceneProps) {
 
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.51, 0]}
+        position={[0, -0.01, 0]}
         receiveShadow
       >
         <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#2a2a2a" opacity={0.8} transparent />
+        <meshStandardMaterial color="#2a2a2a" opacity={0.5} transparent />
       </mesh>
     </>
   );
@@ -150,7 +152,12 @@ export function ARTableDetection({
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [surfaceDetected, setSurfaceDetected] = useState(false);
+  const [showIngredients, setShowIngredients] = useState(false);
+  const [showAllergens, setShowAllergens] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const { trigger } = useHaptics();
+  const { selectedDish } = useARMenu();
 
   useEffect(() => {
     let mounted = true;
@@ -201,11 +208,23 @@ export function ARTableDetection({
     };
   }, []);
 
+  useEffect(() => {
+    if (!cameraReady || dishPosition) return;
+
+    const detectSurfaceTimer = setTimeout(() => {
+      setSurfaceDetected(true);
+      trigger("light");
+      console.log("Surface detected - ready to place");
+    }, 1500);
+
+    return () => clearTimeout(detectSurfaceTimer);
+  }, [cameraReady, dishPosition, trigger]);
+
   const handlePlacement = () => {
     if (!dishPosition) {
-      setDishPosition([0, -0.5, 0]);
+      setDishPosition([0, 0, 0]);
       trigger("medium");
-      console.log("Dish placed on table");
+      console.log("Dish placed on table at surface level");
     }
   };
 
@@ -363,6 +382,55 @@ export function ARTableDetection({
               rotation={rotation}
             />
           </Canvas>
+          
+          {!dishPosition && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="relative">
+                <div className={`w-32 h-32 sm:w-40 sm:h-40 border-2 rounded-lg relative transition-all duration-300 ${
+                  surfaceDetected 
+                    ? 'border-green-400/80 shadow-lg shadow-green-400/20' 
+                    : 'border-yellow-400/60'
+                }`}>
+                  <div className={`absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 transition-colors ${
+                    surfaceDetected ? 'border-green-400' : 'border-yellow-400'
+                  }`}></div>
+                  <div className={`absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 transition-colors ${
+                    surfaceDetected ? 'border-green-400' : 'border-yellow-400'
+                  }`}></div>
+                  <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 transition-colors ${
+                    surfaceDetected ? 'border-green-400' : 'border-yellow-400'
+                  }`}></div>
+                  <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 transition-colors ${
+                    surfaceDetected ? 'border-green-400' : 'border-yellow-400'
+                  }`}></div>
+                  
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {surfaceDetected ? (
+                      <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                        <Check size={20} className="text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full shadow-lg animate-pulse"></div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                  <div className={`backdrop-blur-sm px-3 py-1 rounded-full transition-colors ${
+                    surfaceDetected 
+                      ? 'bg-green-500/80' 
+                      : 'bg-black/60'
+                  }`}>
+                    <p className={`text-xs font-semibold transition-colors ${
+                      surfaceDetected ? 'text-white' : 'text-yellow-400'
+                    }`}>
+                      {surfaceDetected ? '✓ Surface Locked' : 'Scanning...'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -395,73 +463,247 @@ export function ARTableDetection({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-20 sm:bottom-24 left-4 right-4 z-10 safe-bottom"
+          className="absolute bottom-4 sm:bottom-6 left-4 right-4 z-10 safe-bottom"
         >
-          <div className="bg-gradient-to-r from-orange-500/90 to-red-500/90 backdrop-blur-lg p-4 sm:p-6 rounded-xl sm:rounded-2xl text-white text-center shadow-2xl max-w-md mx-auto">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full animate-pulse" />
-              <p className="font-bold text-base sm:text-lg">Table Detected</p>
-            </div>
-            <p className="text-xs sm:text-sm text-white/90 mb-3 sm:mb-4">
-              Point your camera at a flat surface. The golden grid shows where
-              the dish will be placed.
-            </p>
+          <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
+            {!surfaceDetected ? (
+              <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl text-white text-center shadow-lg border border-white/20">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                  <p className="font-bold text-sm sm:text-base">Finding Surface...</p>
+                </div>
+                <p className="text-xs sm:text-sm text-white/80 mb-2">
+                  Point your camera at a <span className="font-semibold text-yellow-300">table or flat surface</span>
+                </p>
+                <div className="flex items-start gap-2 bg-white/5 rounded-lg p-2 text-left">
+                  <span className="text-yellow-300 text-lg">💡</span>
+                  <p className="text-[10px] sm:text-xs text-white/70 leading-relaxed">
+                    Keep your camera steady and pointed at the center of the surface
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-gradient-to-br from-green-500/90 to-emerald-600/90 backdrop-blur-md p-4 rounded-xl text-white text-center shadow-xl border-2 border-green-300/30"
+              >
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                    <Check size={16} className="text-green-600" />
+                  </div>
+                  <p className="font-bold text-base sm:text-lg">Surface Detected!</p>
+                </div>
+                <p className="text-xs sm:text-sm text-white/90">
+                  Ready to place your dish
+                </p>
+              </motion.div>
+            )}
             <button
               onClick={handlePlacement}
-              className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-orange-600 rounded-lg sm:rounded-xl font-bold text-sm sm:text-base md:text-lg hover:bg-white/90 transition-all shadow-lg flex items-center gap-2 mx-auto"
+              disabled={!surfaceDetected}
+              className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-sm sm:text-base transition-all shadow-lg flex items-center gap-2 ${
+                surfaceDetected
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 cursor-pointer'
+                  : 'bg-gray-500/50 text-white/50 cursor-not-allowed'
+              }`}
             >
-              <Check size={20} className="sm:w-6 sm:h-6" />
-              Place Dish Here
+              <Check size={18} className="sm:w-5 sm:h-5" />
+              Place Dish on Surface
             </button>
           </div>
         </motion.div>
       )}
 
+      {dishPosition && selectedDish && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-16 sm:top-20 left-4 right-4 z-10 flex gap-2 justify-center safe-top"
+          >
+            <button
+              onClick={() => {
+                setShowIngredients(!showIngredients);
+                setShowAllergens(false);
+                setShowVideo(false);
+                trigger("light");
+              }}
+              className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
+                showIngredients 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                  : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
+              }`}
+            >
+              <ChefHat size={14} />
+              <span className="hidden sm:inline">Ingredients</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowAllergens(!showAllergens);
+                setShowIngredients(false);
+                setShowVideo(false);
+                trigger("light");
+              }}
+              className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
+                showAllergens 
+                  ? 'bg-gradient-to-r from-orange-500 to-red-600' 
+                  : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
+              }`}
+            >
+              <AlertTriangle size={14} />
+              <span className="hidden sm:inline">Allergens</span>
+            </button>
+            {selectedDish.videoUrl && (
+              <button
+                onClick={() => {
+                  setShowVideo(!showVideo);
+                  setShowIngredients(false);
+                  setShowAllergens(false);
+                  trigger("light");
+                }}
+                className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
+                  showVideo 
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-600' 
+                    : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
+                }`}
+              >
+                <Play size={14} />
+                <span className="hidden sm:inline">Recipe</span>
+              </button>
+            )}
+          </motion.div>
+
+          <AnimatePresence>
+            {showIngredients && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                className="absolute top-32 sm:top-36 left-4 right-4 z-10 mx-auto max-w-xs safe-top"
+              >
+                <div className="bg-gradient-to-br from-green-500/95 to-emerald-600/95 backdrop-blur-md rounded-xl p-4 shadow-2xl border-2 border-green-300/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ChefHat size={18} className="text-white" />
+                    <h3 className="text-white font-bold text-sm">Ingredients</h3>
+                  </div>
+                  <div className="space-y-1.5">
+                    {selectedDish.ingredients.map((ingredient, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-white/90">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                        <span className="text-xs">{ingredient}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {showAllergens && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                className="absolute top-32 sm:top-36 left-4 right-4 z-10 mx-auto max-w-xs safe-top"
+              >
+                <div className="bg-gradient-to-br from-orange-500/95 to-red-600/95 backdrop-blur-md rounded-xl p-4 shadow-2xl border-2 border-orange-300/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle size={18} className="text-white" />
+                    <h3 className="text-white font-bold text-sm">Allergen Information</h3>
+                  </div>
+                  {selectedDish.allergens.includes("None") ? (
+                    <div className="flex items-center gap-2 text-white/90">
+                      <Check size={14} className="text-white" />
+                      <span className="text-xs">No common allergens</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {selectedDish.allergens.map((allergen, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-white/90">
+                          <AlertTriangle size={12} className="text-white" />
+                          <span className="text-xs font-semibold">{allergen}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {showVideo && selectedDish.videoUrl && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                className="absolute top-32 sm:top-36 left-4 right-4 z-10 mx-auto max-w-sm safe-top"
+              >
+                <div className="bg-gradient-to-br from-purple-500/95 to-pink-600/95 backdrop-blur-md rounded-xl p-4 shadow-2xl border-2 border-purple-300/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Play size={18} className="text-white" />
+                      <h3 className="text-white font-bold text-sm">Recipe Video</h3>
+                    </div>
+                    <button
+                      onClick={() => setShowVideo(false)}
+                      className="text-white/80 hover:text-white"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="aspect-video bg-black/20 rounded-lg overflow-hidden">
+                    <iframe
+                      src={selectedDish.videoUrl}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+
       {dishPosition && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 right-4 z-10 safe-bottom"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="absolute bottom-4 sm:bottom-6 right-4 z-10 safe-bottom safe-right"
         >
-          <div className="bg-white/10 backdrop-blur-lg p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl max-w-xl mx-auto">
-            <div className="flex items-center justify-center gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4">
-              <button
-                onClick={handleZoomOut}
-                className="p-2 sm:p-2.5 md:p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg flex-shrink-0"
-              >
-                <ZoomOut size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
-              </button>
-
-              <div className="flex-1 text-center min-w-0">
-                <p className="text-white font-semibold text-xs sm:text-sm mb-1">
-                  🎯 Dish Placed!
-                </p>
-                <p className="text-white/70 text-xs leading-relaxed">
-                  • Drag to rotate 360°
-                  <br className="hidden sm:inline" />
-                  <span className="hidden sm:inline"> • </span>Scroll to zoom
-                  <br className="hidden sm:inline" />
-                  <span className="hidden sm:inline"> • </span>Buttons for control
-                </p>
+          <div className="bg-white/10 backdrop-blur-md p-2.5 sm:p-3 rounded-lg shadow-xl">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleZoomOut}
+                  className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-all"
+                >
+                  <ZoomOut size={18} className="sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={handleZoomIn}
+                  className="p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 transition-all"
+                >
+                  <ZoomIn size={18} className="sm:w-5 sm:h-5" />
+                </button>
               </div>
 
-              <button
-                onClick={handleZoomIn}
-                className="p-2 sm:p-2.5 md:p-3 bg-white/20 rounded-full text-white hover:bg-white/30 transition-all shadow-lg flex-shrink-0"
-              >
-                <ZoomIn size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6" />
-              </button>
-            </div>
+              <div className="bg-white/5 rounded-lg p-2 text-center">
+                <p className="text-white/60 text-[10px] sm:text-xs mb-1">
+                  {scale.toFixed(1)}x
+                </p>
+                <div className="h-1 sm:h-1.5 bg-white/20 rounded-full overflow-hidden w-16 sm:w-20">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all"
+                    style={{ width: `${((scale - 0.5) / 4.5) * 100}%` }}
+                  />
+                </div>
+              </div>
 
-            <div className="bg-white/5 rounded-lg p-2 sm:p-3 text-center">
-              <p className="text-white/60 text-xs mb-1">
-                Scale: {scale.toFixed(1)}x
-              </p>
-              <div className="h-1.5 sm:h-2 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-green-400 to-blue-500 transition-all"
-                  style={{ width: `${((scale - 0.5) / 4.5) * 100}%` }}
-                />
+              <div className="text-center pt-2 border-t border-white/10">
+                <p className="text-white/50 text-[9px] sm:text-[10px]">
+                  Drag • Scroll
+                </p>
               </div>
             </div>
           </div>

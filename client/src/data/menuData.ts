@@ -60,6 +60,31 @@ function createDescription(dishName: string, categoryName: string): string {
   return `Authentic ${categoryName} dish`;
 }
 
+function createAllergensList(dishName: string): string[] {
+  const allergenMapping: Record<string, string[]> = {
+    paneer: ["Dairy", "Milk"],
+    dal: ["Legumes"],
+    rice: ["None"],
+    naan: ["Gluten", "Dairy"],
+    kofta: ["Dairy", "Nuts", "Milk"],
+    gulab: ["Dairy", "Milk", "Gluten"],
+    mushroom: ["Mushrooms"],
+    salad: ["None"]
+  };
+  
+  for (const [key, allergens] of Object.entries(allergenMapping)) {
+    if (dishName.toLowerCase().includes(key)) {
+      return allergens;
+    }
+  }
+  
+  return ["Check with staff"];
+}
+
+function getVideoUrl(dishName: string): string | undefined {
+  return undefined;
+}
+
 export const dishes: Dish[] = menuJson.categories.flatMap((cat: any) => 
   cat.dishes.map((dish: any, index: number) => ({
     id: dish.id,
@@ -68,6 +93,8 @@ export const dishes: Dish[] = menuJson.categories.flatMap((cat: any) =>
     description: createDescription(dish.name, cat.name),
     calories: Math.round(dish.price * 2.5),
     ingredients: createIngredientsList(dish.name),
+    allergens: createAllergensList(dish.name),
+    videoUrl: getVideoUrl(dish.name),
     emoji: colorMapping[cat.id]?.emoji || "🍽️",
     image: dish.image || cat.image,
     modelPath: dish.model || cat.model
