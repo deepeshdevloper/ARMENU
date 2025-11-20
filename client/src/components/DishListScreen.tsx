@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { getDishesForCategory } from "@/data/menuData";
@@ -6,114 +6,152 @@ import { ChevronLeft } from "lucide-react";
 import type { Dish } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
 
-function DishCard({ dish, onClick }: {
+function LuxuryDishCard({ dish, onClick, index }: {
   dish: Dish;
   onClick: () => void;
+  index: number;
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
-  const getCategoryColor = (emoji: string) => {
-    switch(emoji) {
-      case '🔥': return { primary: '#EF4444', secondary: '#DC2626', glow: 'rgba(239, 68, 68, 0.3)' };
-      case '🍫': case '🍰': case '🍨': case '☕': return { primary: '#F9A8D4', secondary: '#EC4899', glow: 'rgba(249, 168, 212, 0.3)' };
-      case '🍹': case '🥤': case '🫐': return { primary: '#67E8F9', secondary: '#06B6D4', glow: 'rgba(103, 232, 249, 0.3)' };
-      case '🥗': case '🥙': case '🌯': case '🍅': return { primary: '#6EE7B7', secondary: '#10B981', glow: 'rgba(110, 231, 183, 0.3)' };
-      case '🍳': case '🥞': case '🥑': case '🍞': return { primary: '#FCD34D', secondary: '#F59E0B', glow: 'rgba(252, 211, 77, 0.3)' };
-      case '🍕': case '🍝': case '🍚': return { primary: '#FCA5A5', secondary: '#EF4444', glow: 'rgba(252, 165, 165, 0.3)' };
-      default: return { primary: '#6EE7B7', secondary: '#10B981', glow: 'rgba(110, 231, 183, 0.3)' };
-    }
-  };
-
-  const colors = getCategoryColor(dish.emoji);
+  const cardOffset = useMemo(() => ({
+    x: (Math.random() - 0.5) * 2,
+    rotate: (Math.random() - 0.5) * 0.5,
+  }), []);
 
   return (
     <motion.div
-      className="w-full mb-4 px-3 sm:px-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="w-full px-4 mb-6"
+      initial={{ opacity: 0, y: 40, rotateX: 15 }}
+      animate={{ opacity: 1, y: 0, rotateX: 0 }}
+      transition={{ 
+        duration: 0.6, 
+        delay: index * 0.08,
+        ease: [0.16, 1, 0.3, 1]
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div 
-        className="relative rounded-2xl overflow-hidden shadow-xl cursor-pointer bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm border border-white/10"
+      <motion.div
+        className="relative rounded-3xl overflow-hidden cursor-pointer group"
         onClick={onClick}
+        whileHover={{ scale: 1.02, y: -5 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
         style={{
-          boxShadow: `0 10px 40px rgba(0,0,0,0.3), 0 0 20px ${colors.glow}`
+          background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: `
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            0 0 30px rgba(212, 175, 55, ${isHovered ? '0.2' : '0.05'}),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1)
+          `,
+          border: '1px solid rgba(212, 175, 55, 0.15)',
         }}
       >
-        <div className="flex flex-col sm:flex-row">
-          <div className="relative h-48 sm:h-56 sm:w-48 lg:w-56 overflow-hidden flex-shrink-0 bg-gray-800">
+        <div className="flex flex-col sm:flex-row h-full">
+          <div className="relative h-56 sm:h-64 sm:w-64 flex-shrink-0 overflow-hidden">
             {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="animate-pulse text-white/50">Loading...</div>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <div className="w-8 h-8 border-2 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin" />
               </div>
             )}
-            <img 
+            <motion.img 
               src={dish.image} 
               alt={dish.name}
               loading="lazy"
               onLoad={() => setImageLoaded(true)}
-              className={`w-full h-full object-cover transition-all duration-500 hover:scale-110 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+              className="w-full h-full object-cover"
+              animate={{
+                scale: isHovered ? 1.1 : 1,
+              }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r sm:bg-gradient-to-r from-transparent via-transparent to-gray-900/80" />
-            <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full">
-              <span className="text-white text-sm font-medium">{dish.calories} cal</span>
+            
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/80 sm:to-black/60" />
+            
+            <div className="absolute top-4 left-4">
+              <div className="px-4 py-2 rounded-full bg-black/60 backdrop-blur-xl border border-yellow-500/30">
+                <span className="text-yellow-400 text-sm font-semibold">{dish.calories} cal</span>
+              </div>
             </div>
+            
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-yellow-500/0 via-yellow-500/0 to-yellow-500/20"
+              animate={{
+                opacity: isHovered ? 1 : 0,
+              }}
+              transition={{ duration: 0.4 }}
+            />
           </div>
           
-          <div className="flex-1 p-4 sm:p-5 lg:p-6 flex flex-col justify-between">
+          <div className="flex-1 p-6 flex flex-col justify-between relative">
             <div>
-              <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">
-                {dish.emoji} {dish.name}
-              </h3>
+              <motion.div
+                className="flex items-center gap-3 mb-3"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.08 + 0.2 }}
+              >
+                <span className="text-4xl">{dish.emoji}</span>
+                <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-yellow-100 bg-clip-text text-transparent">
+                  {dish.name}
+                </h3>
+              </motion.div>
               
-              <p className="text-white/80 text-sm sm:text-base mb-3 line-clamp-2">
+              <p className="text-gray-300 text-sm sm:text-base mb-4 leading-relaxed">
                 {dish.description}
               </p>
               
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {dish.ingredients.slice(0, 3).map((ingredient, idx) => (
-                  <span 
+              <div className="flex flex-wrap gap-2">
+                {dish.ingredients.slice(0, 4).map((ingredient, idx) => (
+                  <motion.span 
                     key={idx}
-                    className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/70 backdrop-blur-sm"
+                    className="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-yellow-600/20 to-amber-700/20 text-yellow-200/90 backdrop-blur-sm border border-yellow-500/20"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.08 + 0.3 + idx * 0.05 }}
                   >
                     {ingredient}
-                  </span>
+                  </motion.span>
                 ))}
-                {dish.ingredients.length > 3 && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/70">
-                    +{dish.ingredients.length - 3} more
+                {dish.ingredients.length > 4 && (
+                  <span className="text-xs px-3 py-1.5 rounded-full bg-yellow-600/10 text-yellow-400/60">
+                    +{dish.ingredients.length - 4} more
                   </span>
                 )}
               </div>
             </div>
             
             <motion.button
-              className="w-full sm:w-auto py-2.5 px-6 rounded-full font-bold text-white relative overflow-hidden text-sm sm:text-base shadow-lg"
+              className="mt-6 w-full sm:w-auto py-3 px-8 rounded-full font-bold text-white relative overflow-hidden group"
               style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
+                background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%)',
+                boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)',
               }}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ 
+                scale: 1.05,
+                boxShadow: '0 6px 30px rgba(212, 175, 55, 0.6)',
+              }}
               whileTap={{ scale: 0.95 }}
             >
               <motion.div
-                className="absolute inset-0 bg-white/20"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
                 animate={{
-                  opacity: [0, 0.5, 0]
+                  x: isHovered ? ['-100%', '200%'] : '-100%',
                 }}
                 transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
+                  duration: 0.8,
+                  ease: "easeInOut",
                 }}
               />
-              View in AR
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                ✨ View in AR
+              </span>
             </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -125,60 +163,107 @@ export function DishListScreen() {
 
   useEffect(() => {
     if (selectedCategory) {
+      console.log('DishListScreen: Loading dishes for', selectedCategory.name);
       const categoryDishes = getDishesForCategory(selectedCategory.id);
+      console.log('DishListScreen: Found', categoryDishes.length, 'dishes');
       setDishes(categoryDishes);
     }
   }, [selectedCategory]);
 
-  const handleDishClick = (dish: Dish) => {
+  const handleDishSelect = (dish: Dish) => {
+    console.log('DishListScreen: Dish selected', dish.name);
     trigger('medium');
     selectDish(dish);
   };
 
-  if (!selectedCategory || dishes.length === 0) {
+  const handleBack = () => {
+    console.log('DishListScreen: Going back to categories');
+    trigger('light');
+    setScreen("categories");
+  };
+
+  if (!selectedCategory) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-gray-900 via-black to-gray-900 overflow-hidden flex flex-col">
-      <div className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 py-4 sm:py-6 safe-top border-b border-white/10 bg-black/30 backdrop-blur-md sticky top-0 z-50">
-        <button
-          onClick={() => setScreen("categories")}
-          className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
-        >
-          <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
-        </button>
+    <motion.div
+      className="fixed inset-0 w-full h-full bg-black overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-black to-zinc-900" />
+      
+      <motion.div
+        className="absolute inset-0"
+        animate={{
+          background: [
+            'radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.03) 0%, transparent 50%)',
+            'radial-gradient(circle at 80% 70%, rgba(212, 175, 55, 0.05) 0%, transparent 50%)',
+            'radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.03) 0%, transparent 50%)',
+          ]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-        <div className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-md">
-          <p className="text-white text-sm sm:text-base font-bold whitespace-nowrap">
-            {selectedCategory.emoji} {selectedCategory.name}
-          </p>
+      <div className="relative z-10 w-full h-full flex flex-col">
+        <div className="sticky top-0 z-20 backdrop-blur-2xl bg-black/40 border-b border-yellow-500/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-4">
+            <motion.button
+              onClick={handleBack}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-600/20 to-amber-700/20 backdrop-blur-xl border border-yellow-500/30 flex items-center justify-center"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <ChevronLeft className="w-6 h-6 text-yellow-400" />
+            </motion.button>
+            
+            <div className="flex-1">
+              <motion.h1
+                className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-yellow-200 via-amber-400 to-yellow-600 bg-clip-text text-transparent"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ textShadow: '0 0 30px rgba(212, 175, 55, 0.3)' }}
+              >
+                {selectedCategory.emoji} {selectedCategory.name}
+              </motion.h1>
+              <motion.p
+                className="text-yellow-200/60 text-sm mt-1"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                {dishes.length} premium dishes
+              </motion.p>
+            </div>
+          </div>
         </div>
 
-        <div className="w-10 sm:w-11" />
-      </div>
-
-      <div className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="max-w-4xl mx-auto py-4 sm:py-6">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ staggerChildren: 0.1 }}
-          >
-            {dishes.map((dish) => (
-              <DishCard
-                key={dish.id}
-                dish={dish}
-                onClick={() => handleDishClick(dish)}
-              />
-            ))}
-          </motion.div>
-          
-          <div className="text-center py-8 text-white/40 text-sm">
-            {dishes.length} delicious {dishes.length === 1 ? 'dish' : 'dishes'} available
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-yellow-600/20 scrollbar-track-transparent">
+          <div className="max-w-5xl mx-auto py-8">
+            {dishes.length === 0 ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-3 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-yellow-200/60">Loading dishes...</p>
+                </div>
+              </div>
+            ) : (
+              dishes.map((dish, index) => (
+                <LuxuryDishCard
+                  key={dish.id}
+                  dish={dish}
+                  onClick={() => handleDishSelect(dish)}
+                  index={index}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

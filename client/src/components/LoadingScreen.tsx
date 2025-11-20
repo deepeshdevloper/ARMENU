@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useARMenu } from "@/lib/stores/useARMenu";
 import { useGLTF } from "@react-three/drei";
-import menuJson from "@/data/menu.json";
 
 const MODEL_PATHS = [
   "/models/categories/breads.glb",
@@ -29,188 +28,241 @@ const MODEL_PATHS = [
 ];
 
 export function LoadingScreen() {
-  const [showSecondLine, setShowSecondLine] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [modelsLoaded, setModelsLoaded] = useState(0);
-  
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
-    const updateDimensions = () => {
-      setDimensions({ 
-        width: window.innerWidth, 
-        height: window.innerHeight 
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({
+        x: (e.clientX / window.innerWidth - 0.5) * 40,
+        y: (e.clientY / window.innerHeight - 0.5) * 40,
       });
     };
-    
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
-  
-  const particles = useMemo(() => {
-    if (dimensions.width === 0 || dimensions.height === 0) return [];
-    return Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * dimensions.width,
-      y: Math.random() * dimensions.height,
-      delay: Math.random() * 2,
-      duration: 2 + Math.random() * 2,
-    }));
-  }, [dimensions]);
+
+  const goldenParticles = useMemo(
+    () =>
+      Array.from({ length: 30 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        delay: Math.random() * 3,
+        duration: 3 + Math.random() * 4,
+        size: 2 + Math.random() * 4,
+      })),
+    [],
+  );
 
   useEffect(() => {
-    console.log('LoadingScreen: Component mounted, starting model preload');
+    console.log("LoadingScreen: Starting luxury preload");
     let mounted = true;
-    
-    setTimeout(() => {
-      if (mounted) {
-        console.log('LoadingScreen: Showing second line');
-        setShowSecondLine(true);
-      }
-    }, 300);
 
-    console.log(`LoadingScreen: Preloading ${MODEL_PATHS.length} models...`);
-    MODEL_PATHS.forEach(path => {
+    MODEL_PATHS.forEach((path) => {
       useGLTF.preload(path);
     });
 
     let loadedCount = 0;
     const progressInterval = setInterval(() => {
       if (!mounted) return;
-      
+
       loadedCount++;
-      const currentProgress = Math.min((loadedCount / MODEL_PATHS.length) * 100, 100);
+      const currentProgress = Math.min(
+        (loadedCount / MODEL_PATHS.length) * 100,
+        100,
+      );
       setProgress(currentProgress);
-      setModelsLoaded(loadedCount);
-      
+
       if (loadedCount >= MODEL_PATHS.length) {
         clearInterval(progressInterval);
-        console.log('LoadingScreen: All models preloaded!');
-        
+
         setTimeout(() => {
           if (mounted) {
-            console.log('LoadingScreen: Transitioning to categories screen');
+            console.log("LoadingScreen: Transitioning to categories");
             useARMenu.getState().setScreen("categories");
           }
-        }, 300);
+        }, 500);
       }
-    }, 100);
+    }, 80);
 
     return () => {
-      console.log('LoadingScreen: Cleanup called');
       mounted = false;
       clearInterval(progressInterval);
     };
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-green-600 to-amber-700" />
-      
-      <div className="absolute inset-0">
-        {particles.map((particle) => (
+    <div className="fixed inset-0 w-full h-full flex items-center justify-center overflow-hidden bg-white">
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-amber-50"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 30% 50%, rgba(212, 175, 55, 0.12) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(184, 134, 11, 0.08) 0%, transparent 50%)",
+        }}
+        animate={{
+          x: mousePos.x,
+          y: mousePos.y,
+        }}
+        transition={{ type: "spring", stiffness: 50, damping: 30 }}
+      />
+
+      <div className="absolute inset-0 overflow-hidden">
+        {goldenParticles.map((particle) => (
           <motion.div
             key={particle.id}
-            className="absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"
-            initial={{
-              x: particle.x,
-              y: particle.y,
-              scale: 0,
-              opacity: 0,
+            className="absolute rounded-full bg-gradient-to-r from-yellow-500/50 via-amber-400/70 to-orange-400/50 blur-sm"
+            style={{
+              left: `${particle.x}%`,
+              top: `${particle.y}%`,
+              width: particle.size,
+              height: particle.size,
             }}
             animate={{
-              scale: [0, 1, 0],
-              opacity: [0, 0.6, 0],
+              scale: [0, 1.5, 0],
+              opacity: [0, 0.8, 0],
+              y: [-20, -60, -100],
             }}
             transition={{
               duration: particle.duration,
               repeat: Infinity,
               delay: particle.delay,
-              ease: "easeInOut",
+              ease: "easeOut",
             }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-4 sm:gap-6 md:gap-8 px-4 sm:px-6 w-full max-w-xs sm:max-w-md md:max-w-lg">
+      <motion.div
+        className="absolute inset-0"
+        animate={{
+          background: [
+            "radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 60%)",
+            "radial-gradient(circle at 60% 40%, rgba(255, 215, 0, 0.12) 0%, transparent 60%)",
+            "radial-gradient(circle at 40% 60%, rgba(184, 134, 11, 0.08) 0%, transparent 60%)",
+            "radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 60%)",
+          ],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <div className="relative z-10 flex flex-col items-center gap-8 px-6">
         <motion.div
-          className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32"
+          className="relative w-32 h-32"
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.div
-            className="absolute inset-0 rounded-full border-3 sm:border-4 border-white/30"
+            className="absolute inset-0 rounded-full"
+            style={{
+              background:
+                "conic-gradient(from 0deg, #D4AF37, #FFD700, #B8860B, #D4AF37)",
+              filter: "blur(20px)",
+              opacity: 0.4,
+            }}
             animate={{
-              scale: [1, 1.05, 1],
-              borderColor: ["rgba(255,255,255,0.3)", "rgba(255,255,255,0.8)", "rgba(255,255,255,0.3)"],
+              rotate: 360,
             }}
             transition={{
-              duration: 0.3,
+              duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "linear",
             }}
-          >
-            <div className="w-full h-full rounded-full bg-white/20 backdrop-blur-sm" />
-          </motion.div>
-          
-          <svg className="absolute inset-0 w-full h-full -rotate-90">
-            <circle
-              cx="50%"
-              cy="50%"
-              r="45%"
-              fill="none"
-              stroke="white"
-              strokeWidth="4"
-              strokeDasharray={`${progress * 2.8}, 280`}
-              strokeLinecap="round"
-              className="transition-all duration-300"
-            />
-          </svg>
+          />
+
+          <div className="absolute inset-2 rounded-full bg-white/90 backdrop-blur-xl flex items-center justify-center border border-amber-200 shadow-lg">
+            <svg className="w-full h-full -rotate-90">
+              <circle
+                cx="50%"
+                cy="50%"
+                r="45%"
+                fill="none"
+                stroke="url(#goldGradient)"
+                strokeWidth="3"
+                strokeDasharray={`${progress * 2.8}, 280`}
+                strokeLinecap="round"
+                className="transition-all duration-300 drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]"
+              />
+              <defs>
+                <linearGradient
+                  id="goldGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stopColor="#FFD700" />
+                  <stop offset="50%" stopColor="#D4AF37" />
+                  <stop offset="100%" stopColor="#F59E0B" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <motion.div
+            className="absolute inset-0 rounded-full border border-yellow-500/30"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 0, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
         </motion.div>
-        
-        <div className="text-center w-full">
-          <motion.p 
-            className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-wide"
+
+        <div className="text-center">
+          <motion.div
+            className="relative inline-block"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            बापू की कुटिया
-          </motion.p>
-          
-          {showSecondLine && (
-            <motion.p
-              className="text-white/90 text-sm sm:text-base md:text-lg mt-2 sm:mt-3 font-semibold"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Bapu Ki Kutiya • Roshanpura, Bhopal
-            </motion.p>
-          )}
-          
-          <motion.div
-            className="mt-4 sm:mt-5 md:mt-6 h-1 sm:h-1.5 bg-white/20 rounded-full overflow-hidden"
-            initial={{ opacity: 0, scaleX: 0 }}
-            animate={{ opacity: 1, scaleX: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <motion.div
-              className="h-full bg-gradient-to-r from-white via-pink-200 to-white rounded-full"
+            <motion.h1
+              className="text-4xl font-bold bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-600 bg-clip-text text-transparent"
               style={{
-                width: `${Math.min(progress, 100)}%`,
-                backgroundSize: '200% 100%',
+                textShadow: "0 2px 20px rgba(212, 175, 55, 0.2)",
               }}
+            >
+              AR Menu Experience
+            </motion.h1>
+            <motion.div
+              className="absolute -inset-4 bg-gradient-to-r from-transparent via-amber-500/10 to-transparent blur-xl"
               animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                opacity: [0.3, 0.6, 0.3],
               }}
               transition={{
-                duration: 1.5,
+                duration: 2,
                 repeat: Infinity,
-                ease: "linear",
+                ease: "easeInOut",
               }}
             />
+          </motion.div>
+
+          <motion.p
+            className="text-gray-600 text-sm mt-3 font-medium tracking-wide"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            Loading premium experience...
+          </motion.p>
+
+          <motion.div
+            className="mt-6 text-amber-600 text-xs font-semibold"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
+            {Math.round(progress)}%
           </motion.div>
         </div>
       </div>

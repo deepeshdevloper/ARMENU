@@ -1,547 +1,519 @@
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Text, Html } from "@react-three/drei";
-import { Suspense, useRef, useState, useMemo, useEffect, memo } from "react";
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Text, useGLTF, PerspectiveCamera } from "@react-three/drei";
+import { Suspense, useRef, useState, useMemo, useEffect } from "react";
+import { motion, PanInfo } from "framer-motion";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
 import { categories as defaultCategories } from "@/data/menuData";
 import { useARMenu, Category } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import menuJson from "@/data/menu.json";
 
-const categoryModelMap: Record<string, string> = menuJson.categories.reduce((acc: any, cat: any) => {
-  if (cat.model) {
-    acc[cat.id] = cat.model;
-  }
-  return acc;
-}, {});
+const categoryModelMap: Record<string, string> = menuJson.categories.reduce(
+  (acc: any, cat: any) => {
+    if (cat.model) {
+      acc[cat.id] = cat.model;
+    }
+    return acc;
+  },
+  {},
+);
 
-function LoadingPlaceholder() {
+const materialConfigs: Record<string, { color: string; metalness: number; name: string }> = {
+  paneer: { color: "#FFD700", metalness: 0.9, name: "Gold" },
+  kofta: { color: "#50C878", metalness: 0.85, name: "Emerald" },
+  mushroom: { color: "#C19A6B", metalness: 0.8, name: "Bronze" },
+  kaju: { color: "#D4AF37", metalness: 0.95, name: "Rose Gold" },
+  chole: { color: "#DC143C", metalness: 0.85, name: "Ruby" },
+  vegetables: { color: "#32CD32", metalness: 0.8, name: "Jade" },
+  breads: { color: "#E5C7A9", metalness: 0.7, name: "Champagne" },
+  rice: { color: "#F4A460", metalness: 0.75, name: "Amber" },
+  dal: { color: "#FF8C00", metalness: 0.8, name: "Topaz" },
+  salads: { color: "#00FA9A", metalness: 0.85, name: "Mint" },
+  desserts: { color: "#FF69B4", metalness: 0.9, name: "Pink Diamond" },
+};
+
+function FloatingParticles({ color }: { color: string }) {
+  const particlesRef = useRef<THREE.Points>(null);
+
+  const particles = useMemo(() => {
+    const count = 20;
+    const positions = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 0.3 + Math.random() * 0.2;
+      positions[i * 3] = Math.cos(angle) * radius;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 0.6;
+      positions[i * 3 + 2] = Math.sin(angle) * radius;
+    }
+
+    return positions;
+  }, []);
+
+  useFrame((state) => {
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y += 0.002;
+      const positions = particlesRef.current.geometry.attributes.position
+        .array as Float32Array;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i + 1] += Math.sin(state.clock.elapsedTime + i) * 0.0015;
+      }
+
+      particlesRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
   return (
-    <Html center>
-      <div className="flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-      </div>
-    </Html>
+    <points ref={particlesRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={particles.length / 3}
+          array={particles}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.02}
+        color={color}
+        transparent
+        opacity={0.5}
+        blending={THREE.AdditiveBlending}
+        sizeAttenuation
+      />
+    </points>
   );
 }
 
-function DishModel({ modelPath, isHovered, isSelected, isMobile, shouldLoad }: { 
-  modelPath: string | undefined; 
+function SimpleBase() {
+  const baseRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (baseRef.current) {
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.5) * 0.01;
+      baseRef.current.scale.setScalar(pulse);
+    }
+  });
+
+  return (
+    <mesh
+      ref={baseRef}
+      position={[0, -0.15, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+    >
+      <circleGeometry args={[0.25, 32]} />
+      <meshPhysicalMaterial
+        color="#D4AF37"
+        emissive="#D4AF37"
+        emissiveIntensity={0.3}
+        metalness={0.95}
+        roughness={0.1}
+        transparent
+        opacity={0.5}
+      />
+    </mesh>
+  );
+}
+
+function DishModel({
+  modelPath,
+  isHovered,
+  isSelected,
+}: {
+  modelPath: string | undefined;
   isHovered: boolean;
   isSelected: boolean;
-  isMobile: boolean;
-  shouldLoad: boolean;
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  
+  const modelRef = useRef<THREE.Group>(null);
+
   if (!modelPath) {
     return (
       <mesh>
-        <sphereGeometry args={[0.6, 32, 32]} />
-        <meshStandardMaterial color="#888888" emissive="#888888" emissiveIntensity={0.3} />
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial
+          color="#888888"
+          emissive="#888888"
+          emissiveIntensity={0.3}
+          metalness={0.8}
+          roughness={0.2}
+        />
       </mesh>
     );
   }
-  
-  if (!shouldLoad) {
-    return (
-      <mesh>
-        <sphereGeometry args={[0.6, 32, 32]} />
-        <meshStandardMaterial color="#444444" emissive="#444444" emissiveIntensity={0.2} />
-      </mesh>
-    );
-  }
-  
-  return (
-    <Suspense fallback={<LoadingPlaceholder />}>
-      <LoadedModel 
-        modelPath={modelPath} 
-        isHovered={isHovered} 
-        isSelected={isSelected} 
-        isMobile={isMobile}
-        onLoad={() => setIsLoaded(true)}
-      />
-    </Suspense>
-  );
-}
 
-function LoadedModel({ modelPath, isHovered, isSelected, isMobile, onLoad }: {
-  modelPath: string;
-  isHovered: boolean;
-  isSelected: boolean;
-  isMobile: boolean;
-  onLoad: () => void;
-}) {
   const { scene } = useGLTF(modelPath);
-  const modelRef = useRef<THREE.Group>(null);
-  
-  useEffect(() => {
-    if (scene) {
-      onLoad();
-      console.log(`Model loaded: ${modelPath}`);
-    }
-  }, [scene, modelPath, onLoad]);
-  
+
   useEffect(() => {
     if (modelRef.current) {
       modelRef.current.rotation.x = -Math.PI / 2;
     }
   }, []);
-  
+
   useFrame((state) => {
     if (modelRef.current) {
-      const rotationSpeed = isHovered || isSelected ? 0.02 : 0.01;
+      const rotationSpeed = isHovered || isSelected ? 0.012 : 0.006;
       modelRef.current.rotation.z += rotationSpeed;
+
+      const floatY = Math.sin(state.clock.elapsedTime * 1.2) * 0.08;
+      modelRef.current.position.y = floatY;
     }
   });
 
   const clonedScene = useMemo(() => scene.clone(), [scene]);
-  
-  const modelScale = isMobile ? 2.8 : 3.5;
-  
+
   return (
-    <group ref={modelRef} scale={modelScale}>
+    <group ref={modelRef} scale={0.6}>
       <primitive object={clonedScene} />
     </group>
   );
 }
 
-function DonutRing({ category, position, isSelected, onClick, isMobile, totalCategories, shouldLoadModel }: { 
-  category: Category; 
+function PremiumTorusRing({
+  category,
+  position,
+  isSelected,
+  onClick,
+}: {
+  category: Category;
   position: [number, number, number];
   isSelected: boolean;
   onClick: () => void;
-  isMobile: boolean;
-  totalCategories: number;
-  shouldLoadModel: boolean;
 }) {
   const ringRef = useRef<THREE.Mesh>(null);
-  const circleRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const [isHovered, setIsHovered] = useState(false);
-  
+
   const wobbleOffset = useMemo(() => Math.random() * Math.PI * 2, []);
-  
+  const materialConfig = materialConfigs[category.id] || materialConfigs.paneer;
+
   useFrame((state) => {
-    if (ringRef.current) {
+    if (ringRef.current && groupRef.current) {
       ringRef.current.rotation.y += 0.003;
-      
+
       const time = state.clock.getElapsedTime();
       const floatY = Math.sin(time * 0.5 + wobbleOffset) * 0.15;
       const wobble = Math.sin(time * 0.25 + wobbleOffset) * 0.03;
-      
-      if (groupRef.current) {
-        groupRef.current.position.y = floatY;
-        groupRef.current.rotation.z = wobble;
-      }
+
+      groupRef.current.position.y = floatY;
+      groupRef.current.rotation.z = wobble;
     }
-    
-    if (circleRef.current) {
-      const pulseScale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.03;
-      circleRef.current.scale.setScalar(pulseScale);
+
+    if (glowRef.current) {
+      const pulseScale = 1 + Math.sin(state.clock.elapsedTime * 1.2) * 0.04;
+      glowRef.current.scale.setScalar(pulseScale);
+      glowRef.current.rotation.z += 0.008;
     }
   });
 
-  const scale = isHovered ? 1.08 : isSelected ? 1.2 : 1.0;
-  const opacity = isSelected ? 1 : isHovered ? 1 : 0.85;
+  const scale = isHovered ? 1.08 : isSelected ? 1.12 : 1.0;
   const modelPath = categoryModelMap[category.id];
-  
-  const ringSize = (() => {
-    if (typeof window !== 'undefined') {
-      const width = window.innerWidth;
-      if (width < 640) return 1.8;
-      if (width < 768) return 2.2;
-      if (width < 1024) return 2.6;
-    }
-    return 3.0;
-  })();
-  
-  const ringThickness = ringSize * 0.08;
 
   return (
-    <group 
+    <group
       ref={groupRef}
       position={position}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      <mesh ref={circleRef} rotation={[0, 0, 0]} position={[0, 0, -0.2]}>
-        <circleGeometry args={[ringSize * 0.85, 64]} />
-        <meshStandardMaterial 
-          color={category.color} 
-          emissive={category.color}
-          emissiveIntensity={isHovered ? 0.4 : isSelected ? 0.6 : 0.2}
+      <mesh ref={glowRef} rotation={[0, 0, 0]} position={[0, 0, -0.1]}>
+        <ringGeometry args={[0.45, 0.65, 64]} />
+        <meshBasicMaterial
+          color={materialConfig.color}
           transparent
-          opacity={0.3}
+          opacity={isHovered ? 0.4 : isSelected ? 0.5 : 0.25}
+          blending={THREE.AdditiveBlending}
           side={THREE.DoubleSide}
         />
       </mesh>
-      
+
       <mesh ref={ringRef} scale={scale}>
-        <torusGeometry args={[ringSize, ringThickness, 32, 64]} />
-        <meshStandardMaterial 
-          color={category.neonColor} 
-          emissive={category.neonColor}
-          emissiveIntensity={isHovered ? 1.2 : isSelected ? 1.5 : 0.6}
-          transparent
-          opacity={opacity}
-          roughness={0.2}
-          metalness={0.8}
+        <torusGeometry args={[0.55, 0.05, 32, 100]} />
+        <meshPhysicalMaterial
+          color={materialConfig.color}
+          emissive={materialConfig.color}
+          emissiveIntensity={isHovered ? 1.8 : isSelected ? 2.2 : 0.8}
+          metalness={materialConfig.metalness}
+          roughness={0.1}
+          clearcoat={0.7}
+          clearcoatRoughness={0.05}
+          reflectivity={1}
         />
       </mesh>
-      
-      <DishModel 
-        modelPath={modelPath} 
-        isHovered={isHovered}
-        isSelected={isSelected}
-        isMobile={isMobile}
-        shouldLoad={shouldLoadModel}
-      />
-      
+
+      <FloatingParticles color={materialConfig.color} />
+
       <Suspense fallback={null}>
-        <Text
-          position={[0, -1.5, 0]}
-          fontSize={isMobile ? 0.20 : 0.28}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.02}
-          outlineColor="#000000"
-        >
-          {category.emoji}
-        </Text>
+        <SimpleBase />
       </Suspense>
+
+      <Suspense fallback={null}>
+        <DishModel
+          modelPath={modelPath}
+          isHovered={isHovered}
+          isSelected={isSelected}
+        />
+      </Suspense>
+
     </group>
   );
 }
 
-function Scene({ selectedCategory, onSelect, onVibrate, isMobile, categories, carouselOffset, visibleCategoryIds }: { 
-  selectedCategory: Category | null; 
+function Scene({
+  selectedCategory,
+  onSelect,
+  categories,
+  carouselOffset,
+}: {
+  selectedCategory: Category | null;
   onSelect: (cat: Category) => void;
-  onVibrate: () => void;
-  isMobile: boolean;
   categories: Category[];
   carouselOffset: number;
-  visibleCategoryIds: Set<string>;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  const positions = useMemo(() => {
-    const spacing = isMobile ? 5.8 : 7.5;
-    const numRings = categories.length;
-    const startX = -spacing * (numRings - 1) / 2;
-    
-    return categories.map((_, index) => {
-      const x = startX + index * spacing;
-      const z = -8;
-      const y = 0;
-      
-      return [x, y, z] as [number, number, number];
-    });
-  }, [categories.length, isMobile]);
-
   return (
     <>
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[5, 5, 5]} intensity={1.2} />
-      <pointLight position={[10, 10, 10]} intensity={0.8} />
-      <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
-      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} />
-      
-      <group ref={groupRef}>
-        {categories.map((category, index) => (
-          <DonutRing
+      <PerspectiveCamera makeDefault position={[0, 0.5, 7]} fov={70} />
+
+      <ambientLight intensity={0.8} color="#ffffff" />
+      <directionalLight position={[5, 10, 5]} intensity={1.2} color="#FFF8E1" />
+      <directionalLight
+        position={[-5, 5, -5]}
+        intensity={0.6}
+        color="#E3F2FD"
+      />
+      <pointLight position={[0, 5, 5]} intensity={0.8} color="#FFD700" />
+      <spotLight
+        position={[0, 12, 0]}
+        angle={0.8}
+        penumbra={0.5}
+        intensity={1.0}
+        color="#ffffff"
+        castShadow
+      />
+
+      {categories.map((category, index) => {
+        const angle =
+          (index / categories.length) * Math.PI * 2 + carouselOffset;
+        const radius = 4.0;
+        const x = Math.sin(angle) * radius;
+        const z = Math.cos(angle) * radius;
+        const isSelected = selectedCategory?.id === category.id;
+
+        return (
+          <PremiumTorusRing
             key={category.id}
             category={category}
-            position={positions[index]}
-            isSelected={selectedCategory?.id === category.id}
+            position={[x, 0, z]}
+            isSelected={isSelected}
             onClick={() => {
-              onVibrate();
+              console.log("Ring clicked:", category.name);
               onSelect(category);
             }}
-            isMobile={isMobile}
-            totalCategories={categories.length}
-            shouldLoadModel={visibleCategoryIds.has(category.id)}
           />
-        ))}
-      </group>
-      
-      <OrbitControls 
-        enableZoom={false} 
-        enablePan={false}
-        maxPolarAngle={Math.PI / 2}
-        minPolarAngle={Math.PI / 2}
-        enableDamping
-        dampingFactor={0.05}
-        enableRotate={false}
-        rotateSpeed={0.5}
-      />
+        );
+      })}
     </>
   );
 }
 
-const ThreeCanvas = memo(({ children, cameraConfig }: { children: React.ReactNode, cameraConfig: { position: [number, number, number], fov: number } }) => {
-  return (
-    <Canvas camera={{ position: cameraConfig.position, fov: cameraConfig.fov }}>
-      {children}
-    </Canvas>
-  );
-});
-
-ThreeCanvas.displayName = 'ThreeCanvas';
-
 export function CategoryRingsScreen() {
-  const selectCategory = useARMenu(state => state.selectCategory);
-  const [selectedCat, setSelectedCat] = useState<Category | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [carouselPage, setCarouselPage] = useState(0);
+  const selectCategory = useARMenu((state) => state.selectCategory);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null,
+  );
+  const [currentIndex, setCurrentIndex] = useState(0);
   const { trigger } = useHaptics();
-  const isMobile = useIsMobile();
+  const [carouselOffset, setCarouselOffset] = useState(0);
 
   const categories = defaultCategories;
-  const RINGS_PER_PAGE = isMobile ? 3 : 4;
-  const totalPages = Math.ceil(categories.length / RINGS_PER_PAGE);
-
-  const cameraConfig = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const width = window.innerWidth;
-      if (width < 640) {
-        return { position: [0, 0, 15] as [number, number, number], fov: 70 };
-      } else if (width < 768) {
-        return { position: [0, 0, 13] as [number, number, number], fov: 65 };
-      } else if (width < 1024) {
-        return { position: [0, 0, 12] as [number, number, number], fov: 62 };
-      }
-    }
-    return { position: [0, 0, 12] as [number, number, number], fov: 60 };
-  }, [isMobile]);
-
-  const visibleCategoryIds = useMemo(() => {
-    const currentPageCategories = categories.slice(
-      carouselPage * RINGS_PER_PAGE, 
-      (carouselPage + 1) * RINGS_PER_PAGE
-    );
-    
-    const nextPageCategories = carouselPage < totalPages - 1 
-      ? categories.slice(
-          (carouselPage + 1) * RINGS_PER_PAGE, 
-          (carouselPage + 2) * RINGS_PER_PAGE
-        )
-      : [];
-
-    const visibleIds = new Set<string>();
-    currentPageCategories.forEach(cat => visibleIds.add(cat.id));
-    nextPageCategories.forEach(cat => visibleIds.add(cat.id));
-    
-    return visibleIds;
-  }, [carouselPage, categories, RINGS_PER_PAGE, totalPages]);
-
-  useEffect(() => {
-    const currentPageCategories = categories.slice(
-      carouselPage * RINGS_PER_PAGE, 
-      (carouselPage + 1) * RINGS_PER_PAGE
-    );
-    
-    const nextPageCategories = carouselPage < totalPages - 1 
-      ? categories.slice(
-          (carouselPage + 1) * RINGS_PER_PAGE, 
-          (carouselPage + 2) * RINGS_PER_PAGE
-        )
-      : [];
-
-    currentPageCategories.forEach(cat => {
-      const modelPath = categoryModelMap[cat.id];
-      if (modelPath) {
-        useGLTF.preload(modelPath);
-      }
-    });
-
-    const preloadTimer = setTimeout(() => {
-      nextPageCategories.forEach(cat => {
-        const modelPath = categoryModelMap[cat.id];
-        if (modelPath) {
-          useGLTF.preload(modelPath);
-          console.log(`Preloading next page model: ${modelPath}`);
-        }
-      });
-    }, 1000);
-
-    return () => clearTimeout(preloadTimer);
-  }, [carouselPage, categories, RINGS_PER_PAGE, totalPages]);
 
   const handleSelect = (category: Category) => {
-    if (isTransitioning) return;
-    
-    setSelectedCat(category);
-    setIsTransitioning(true);
-    trigger('medium');
-    
+    console.log("CategoryRingsScreen: handleSelect called", category.name);
+    setSelectedCategory(category);
+    trigger("light");
+
     setTimeout(() => {
+      console.log("CategoryRingsScreen: Transitioning to dish list");
       selectCategory(category);
-      setIsTransitioning(false);
     }, 600);
   };
 
-  const handleVibrate = () => {
-    trigger('light');
+  const nextCategory = () => {
+    setCurrentIndex((prev) => (prev + 1) % categories.length);
+    setCarouselOffset((offset) => offset - (Math.PI * 2) / categories.length);
+    trigger("light");
   };
 
-  const handleNextPage = () => {
-    if (carouselPage < totalPages - 1) {
-      setCarouselPage(prev => prev + 1);
-      trigger('light');
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (carouselPage > 0) {
-      setCarouselPage(prev => prev - 1);
-      trigger('light');
-    }
+  const prevCategory = () => {
+    setCurrentIndex(
+      (prev) => (prev - 1 + categories.length) % categories.length,
+    );
+    setCarouselOffset((offset) => offset + (Math.PI * 2) / categories.length);
+    trigger("light");
   };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
-    const threshold = 50;
-    if (info.offset.x < -threshold && carouselPage < totalPages - 1) {
-      handleNextPage();
-    } else if (info.offset.x > threshold && carouselPage > 0) {
-      handlePrevPage();
+    if (info.offset.x > 100) {
+      prevCategory();
+    } else if (info.offset.x < -100) {
+      nextCategory();
     }
   };
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-hidden">
-      <div 
-        className="absolute inset-0 bg-gradient-to-br from-orange-800 via-green-900 to-amber-950"
-        style={{
-          filter: isTransitioning ? 'blur(10px)' : 'blur(0px)',
-          transition: 'filter 0.5s ease-out'
-        }}
-      />
-      
-      <motion.div 
+    <motion.div
+      className="fixed inset-0 w-full h-full bg-white overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.2}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-amber-50" />
+
+      <motion.div
         className="absolute inset-0"
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-      >
-        <ThreeCanvas cameraConfig={cameraConfig}>
+        animate={{
+          background: [
+            "radial-gradient(circle at 30% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%)",
+            "radial-gradient(circle at 70% 50%, rgba(255, 105, 180, 0.08) 0%, transparent 50%)",
+            "radial-gradient(circle at 50% 70%, rgba(0, 206, 209, 0.08) 0%, transparent 50%)",
+            "radial-gradient(circle at 30% 50%, rgba(212, 175, 55, 0.08) 0%, transparent 50%)",
+          ],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <div className="absolute inset-0">
+        <Canvas shadows gl={{ antialias: true, alpha: true }}>
           <Suspense fallback={null}>
-            <Scene 
-              selectedCategory={selectedCat} 
-              onSelect={handleSelect} 
-              onVibrate={handleVibrate}
-              isMobile={isMobile}
-              categories={categories.slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)}
-              carouselOffset={0}
-              visibleCategoryIds={visibleCategoryIds}
+            <Scene
+              selectedCategory={selectedCategory}
+              onSelect={handleSelect}
+              categories={categories}
+              carouselOffset={carouselOffset}
             />
           </Suspense>
-        </ThreeCanvas>
-      </motion.div>
-      
-      {carouselPage > 0 && (
-        <motion.button
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
-          onClick={handlePrevPage}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-        >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-        </motion.button>
-      )}
-      
-      {carouselPage < totalPages - 1 && (
-        <motion.button
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md text-white p-2 sm:p-3 rounded-full hover:bg-black/80 transition-colors z-10 border border-white/20"
-          onClick={handleNextPage}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-        >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-        </motion.button>
-      )}
-      
-      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center safe-bottom pb-4 sm:pb-8 md:pb-12 pointer-events-none px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4">
-        <div className="flex gap-1.5 sm:gap-2 pointer-events-auto">
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => {
-                setCarouselPage(index);
-                trigger('light');
-              }}
-              className={`h-1.5 sm:h-2 rounded-full transition-all ${
-                index === carouselPage 
-                  ? 'w-6 sm:w-8 bg-white' 
-                  : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/60'
-              }`}
-            />
-          ))}
-        </div>
-        
-        <div className="w-full max-w-6xl pointer-events-auto overflow-hidden">
-          <div className="flex gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 justify-center px-1 sm:px-2 pb-1 sm:pb-2">
-            {categories
-              .slice(carouselPage * RINGS_PER_PAGE, (carouselPage + 1) * RINGS_PER_PAGE)
-              .map((category) => (
-                <motion.div
-                  key={category.id}
-                  className="text-center flex-shrink-0 pointer-events-auto cursor-pointer"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ 
-                    opacity: selectedCat && selectedCat.id !== category.id ? 0.3 : 1,
-                    y: 0,
-                    scale: selectedCat?.id === category.id ? 1.1 : 1
-                  }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  onClick={() => handleSelect(category)}
-                >
-                  <div className="px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 hover:bg-black/60 transition-colors">
-                    <p className="text-white text-[10px] sm:text-xs md:text-sm lg:text-base font-semibold tracking-wide whitespace-nowrap">
-                      {category.emoji} {category.name}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-          </div>
-        </div>
+        </Canvas>
       </div>
-      
-      <motion.div
-        className="absolute top-2 sm:top-4 md:top-6 left-0 right-0 text-center safe-top px-2 sm:px-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <motion.div
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          transition={{ 
-            duration: 0.5,
-            delay: 0.5,
-            type: "spring",
-            stiffness: 100
+
+      <div className="absolute top-6 sm:top-8 left-1/2 -translate-x-1/2 z-10 px-4">
+        <motion.h1
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-600 bg-clip-text text-transparent text-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          style={{ 
+            textShadow: "0 4px 30px rgba(212, 175, 55, 0.3)",
+            letterSpacing: "0.02em"
           }}
-          className="inline-block"
         >
-          <div className="bg-gradient-to-r from-orange-600/30 via-green-600/30 to-amber-600/30 backdrop-blur-md rounded-xl sm:rounded-2xl px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 border border-white/20 shadow-lg">
-            <h1 className="text-white text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold tracking-tight mb-0.5 sm:mb-1">
-              🙏 स्वागत है बापू की कुटिया में
-            </h1>
-            <p className="text-white/90 text-[10px] sm:text-xs md:text-sm font-medium">
-              Welcome to Bapu Ki Kutiya • Roshanpura, Bhopal
+          बापू की कुटिया
+        </motion.h1>
+        <motion.p
+          className="text-gray-800 text-sm sm:text-base mt-2 text-center font-semibold"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          Explore Our Menu
+        </motion.p>
+        <motion.p
+          className="text-gray-500 text-xs sm:text-sm mt-1 text-center font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Tap a ring or swipe to browse categories
+        </motion.p>
+      </div>
+
+      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-3 sm:gap-4 z-10">
+        <motion.button
+          onClick={prevCategory}
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
+          whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+        </motion.button>
+        <motion.button
+          onClick={nextCategory}
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
+          whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+        </motion.button>
+      </div>
+
+      <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 px-4 w-full max-w-md">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 p-6 mx-auto cursor-pointer"
+          style={{
+            boxShadow: `0 20px 60px rgba(0,0,0,0.15), 0 0 40px ${materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700"}20`
+          }}
+          onClick={() => {
+            const category = categories[currentIndex];
+            if (category) {
+              console.log("Category card clicked:", category.name);
+              handleSelect(category);
+            }
+          }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="text-5xl sm:text-6xl">
+              {categories[currentIndex]?.emoji || "🍽️"}
+            </div>
+            <h2 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center"
+              style={{ 
+                color: materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700",
+                textShadow: `0 2px 30px ${materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700"}40`,
+                letterSpacing: "0.02em"
+              }}
+            >
+              {categories[currentIndex]?.name}
+            </h2>
+            <p className="text-gray-700 text-base sm:text-lg font-medium text-center max-w-sm">
+              {categories[currentIndex]?.description || "Tap to explore dishes"}
             </p>
+            <div className="mt-2 px-6 py-2 rounded-full border-2" 
+              style={{ 
+                borderColor: materialConfigs[categories[currentIndex]?.id]?.color,
+                backgroundColor: `${materialConfigs[categories[currentIndex]?.id]?.color}15`
+              }}>
+              <span className="text-sm font-bold" style={{ color: materialConfigs[categories[currentIndex]?.id]?.color }}>
+                👆 Tap to View {materialConfigs[categories[currentIndex]?.id]?.name} Collection
+              </span>
+            </div>
           </div>
         </motion.div>
-      </motion.div>
-    </div>
+      </div>
+
+      <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {categories.map((_, index) => (
+          <div
+            key={index}
+            className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
+              index === currentIndex ? "bg-amber-500 w-6 sm:w-8" : "bg-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    </motion.div>
   );
 }

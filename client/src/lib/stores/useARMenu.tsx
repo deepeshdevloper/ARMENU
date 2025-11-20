@@ -6,6 +6,7 @@ export type Category = {
   color: string;
   neonColor: string;
   emoji: string;
+  description?: string;
 };
 
 export type Dish = {
