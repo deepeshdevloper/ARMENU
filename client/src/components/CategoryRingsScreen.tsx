@@ -403,9 +403,9 @@ export function CategoryRingsScreen() {
         </Canvas>
       </div>
 
-      <div className="absolute top-6 sm:top-8 left-1/2 -translate-x-1/2 z-10 px-4">
+      <div className="absolute top-4 sm:top-6 md:top-8 left-1/2 -translate-x-1/2 z-10 px-4 max-w-full">
         <motion.h1
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-600 bg-clip-text text-transparent text-center"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold bg-gradient-to-r from-amber-600 via-yellow-600 to-orange-600 bg-clip-text text-transparent text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -417,7 +417,7 @@ export function CategoryRingsScreen() {
           बापू की कुटिया
         </motion.h1>
         <motion.p
-          className="text-gray-800 text-sm sm:text-base mt-2 text-center font-semibold"
+          className="text-gray-800 text-xs sm:text-sm md:text-base mt-1 sm:mt-2 text-center font-semibold"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
@@ -425,7 +425,7 @@ export function CategoryRingsScreen() {
           Explore Our Menu
         </motion.p>
         <motion.p
-          className="text-gray-500 text-xs sm:text-sm mt-1 text-center font-medium"
+          className="text-gray-500 text-[10px] sm:text-xs md:text-sm mt-0.5 sm:mt-1 text-center font-medium"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -434,33 +434,33 @@ export function CategoryRingsScreen() {
         </motion.p>
       </div>
 
-      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex gap-3 sm:gap-4 z-10">
+      <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-2 sm:gap-3 md:gap-4 z-10">
         <motion.button
           onClick={prevCategory}
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
+          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
           whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
           whileTap={{ scale: 0.95 }}
         >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700" />
         </motion.button>
         <motion.button
           onClick={nextCategory}
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
+          className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center"
           whileHover={{ scale: 1.1, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
           whileTap={{ scale: 0.95 }}
         >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700" />
         </motion.button>
       </div>
 
-      <div className="absolute bottom-28 sm:bottom-32 left-1/2 -translate-x-1/2 z-10 px-4 w-full max-w-md">
+      <div className="absolute bottom-20 sm:bottom-24 md:bottom-28 left-1/2 -translate-x-1/2 z-10 px-4 w-full max-w-xs sm:max-w-sm md:max-w-md">
         <motion.div
           key={currentIndex}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4 }}
-          className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 p-6 mx-auto cursor-pointer"
+          className="bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 p-4 sm:p-6 mx-auto cursor-pointer"
           style={{
             boxShadow: `0 20px 60px rgba(0,0,0,0.15), 0 0 40px ${materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700"}20`
           }}
@@ -474,12 +474,12 @@ export function CategoryRingsScreen() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <div className="flex flex-col items-center gap-3">
-            <div className="text-5xl sm:text-6xl">
+          <div className="flex flex-col items-center gap-2 sm:gap-3">
+            <div className="text-4xl sm:text-5xl md:text-6xl">
               {categories[currentIndex]?.emoji || "🍽️"}
             </div>
             <h2 
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-center"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center"
               style={{ 
                 color: materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700",
                 textShadow: `0 2px 30px ${materialConfigs[categories[currentIndex]?.id]?.color || "#FFD700"}40`,
@@ -488,15 +488,15 @@ export function CategoryRingsScreen() {
             >
               {categories[currentIndex]?.name}
             </h2>
-            <p className="text-gray-700 text-base sm:text-lg font-medium text-center max-w-sm">
+            <p className="text-gray-700 text-sm sm:text-base md:text-lg font-medium text-center max-w-xs sm:max-w-sm">
               {categories[currentIndex]?.description || "Tap to explore dishes"}
             </p>
-            <div className="mt-2 px-6 py-2 rounded-full border-2" 
+            <div className="mt-1 sm:mt-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border-2" 
               style={{ 
                 borderColor: materialConfigs[categories[currentIndex]?.id]?.color,
                 backgroundColor: `${materialConfigs[categories[currentIndex]?.id]?.color}15`
               }}>
-              <span className="text-sm font-bold" style={{ color: materialConfigs[categories[currentIndex]?.id]?.color }}>
+              <span className="text-xs sm:text-sm font-bold" style={{ color: materialConfigs[categories[currentIndex]?.id]?.color }}>
                 👆 Tap to View {materialConfigs[categories[currentIndex]?.id]?.name} Collection
               </span>
             </div>
@@ -504,12 +504,12 @@ export function CategoryRingsScreen() {
         </motion.div>
       </div>
 
-      <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+      <div className="absolute bottom-14 sm:bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
         {categories.map((_, index) => (
           <div
             key={index}
             className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex ? "bg-amber-500 w-6 sm:w-8" : "bg-gray-300"
+              index === currentIndex ? "bg-amber-500 w-5 sm:w-6 md:w-8" : "bg-gray-300"
             }`}
           />
         ))}

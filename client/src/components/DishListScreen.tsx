@@ -5,12 +5,6 @@ import { getDishesForCategory } from "@/data/menuData";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import type { Dish } from "@/lib/stores/useARMenu";
 import { useHaptics } from "@/hooks/useHaptics";
-import { useIsMobile } from "@/hooks/use-is-mobile";
-import { WebcamARViewer } from "./WebcamARViewer";
-import {
-  detectARCapabilities,
-  type ARCapabilities,
-} from "@/lib/utils/arDetection";
 
 function LuxuryDishCard({
   dish,
@@ -44,7 +38,7 @@ function LuxuryDishCard({
 
   return (
     <motion.div
-      className="w-full px-4 mb-6"
+      className="w-full px-3 sm:px-4 mb-4 sm:mb-6"
       initial={{ opacity: 0, y: 40, rotateX: 15 }}
       animate={{ opacity: 1, y: 0, rotateX: 0 }}
       transition={{
@@ -56,7 +50,7 @@ function LuxuryDishCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       <motion.div
-        className="relative rounded-3xl overflow-hidden cursor-pointer group"
+        className="relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer group"
         onClick={onClick}
         whileHover={{ scale: 1.02, y: -5 }}
         whileTap={{ scale: 0.98 }}
@@ -74,7 +68,7 @@ function LuxuryDishCard({
         }}
       >
         <div className="flex flex-col sm:flex-row h-full">
-          <div className="relative h-56 sm:h-64 sm:w-64 flex-shrink-0 overflow-hidden">
+          <div className="relative h-48 sm:h-56 md:h-64 sm:w-56 md:w-64 flex-shrink-0 overflow-hidden">
             {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                 <div className="w-8 h-8 border-2 border-amber-200 border-t-amber-500 rounded-full animate-spin" />
@@ -136,29 +130,29 @@ function LuxuryDishCard({
             />
           </div>
 
-          <div className="flex-1 p-6 flex flex-col justify-between relative">
+          <div className="flex-1 p-4 sm:p-5 md:p-6 flex flex-col justify-between relative">
             <div>
               <motion.div
-                className="flex items-center gap-3 mb-3"
+                className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.08 + 0.2 }}
               >
-                <span className="text-4xl">{dish.emoji}</span>
-                <h3 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 bg-clip-text text-transparent">
+                <span className="text-3xl sm:text-4xl">{dish.emoji}</span>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 bg-clip-text text-transparent">
                   {dish.name}
                 </h3>
               </motion.div>
 
-              <p className="text-gray-700 text-sm sm:text-base mb-4 leading-relaxed">
+              <p className="text-gray-700 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 leading-relaxed">
                 {dish.description}
               </p>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {dish.ingredients.slice(0, 4).map((ingredient, idx) => (
                   <motion.span
                     key={idx}
-                    className="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 text-amber-800 backdrop-blur-sm border border-amber-200"
+                    className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 text-amber-800 backdrop-blur-sm border border-amber-200"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: index * 0.08 + 0.3 + idx * 0.05 }}
@@ -167,7 +161,7 @@ function LuxuryDishCard({
                   </motion.span>
                 ))}
                 {dish.ingredients.length > 4 && (
-                  <span className="text-xs px-3 py-1.5 rounded-full bg-amber-50 text-amber-600">
+                  <span className="text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-50 text-amber-600">
                     +{dish.ingredients.length - 4} more
                   </span>
                 )}
@@ -175,7 +169,7 @@ function LuxuryDishCard({
             </div>
 
             <motion.button
-              className="mt-6 w-full sm:w-auto py-3 px-8 rounded-full font-bold text-white relative overflow-hidden group"
+              className="mt-4 sm:mt-6 w-full sm:w-auto py-2.5 sm:py-3 px-6 sm:px-8 rounded-full font-bold text-white relative overflow-hidden group text-sm sm:text-base"
               style={{
                 background:
                   "linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #B8860B 100%)",
@@ -197,8 +191,8 @@ function LuxuryDishCard({
                   ease: "easeInOut",
                 }}
               />
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4" />
+              <span className="relative z-10 flex items-center justify-center gap-1.5 sm:gap-2">
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 View in AR
               </span>
             </motion.button>
@@ -212,12 +206,7 @@ function LuxuryDishCard({
 export function DishListScreen() {
   const { selectedCategory, selectDish, setScreen } = useARMenu();
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [selectedDishForAR, setSelectedDishForAR] = useState<Dish | null>(null);
-  const [arMode, setARMode] = useState<"none" | "webcam" | "table-detection">(
-    "none",
-  );
   const { trigger } = useHaptics();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (selectedCategory) {
@@ -231,33 +220,7 @@ export function DishListScreen() {
   const handleDishSelect = async (dish: Dish) => {
     console.log("DishListScreen: Dish selected", dish.name);
     trigger("medium");
-
-    try {
-      const arCapabilities = await detectARCapabilities();
-      console.log("AR Capabilities:", arCapabilities);
-
-      if (arCapabilities.preferredMode === "native-ar" && isMobile) {
-        console.log(
-          "DishListScreen: Routing to native AR (via dish detail -> AR screen)",
-        );
-        selectDish(dish);
-      } else if (
-        arCapabilities.preferredMode === "webcam-ar" &&
-        arCapabilities.hasWebcam
-      ) {
-        console.log(
-          "DishListScreen: Routing directly to WebcamAR with table detection",
-        );
-        setSelectedDishForAR(dish);
-        setARMode("table-detection");
-      } else {
-        console.log("DishListScreen: AR not available, showing detail screen");
-        selectDish(dish);
-      }
-    } catch (error) {
-      console.error("Error detecting AR capabilities:", error);
-      selectDish(dish);
-    }
+    selectDish(dish);
   };
 
   const handleBack = () => {
@@ -266,37 +229,8 @@ export function DishListScreen() {
     setScreen("categories");
   };
 
-  const closeAR = () => {
-    setARMode("none");
-    setSelectedDishForAR(null);
-  };
-
   if (!selectedCategory) {
     return null;
-  }
-
-  if (arMode === "table-detection" && selectedDishForAR) {
-    console.log("DishListScreen: Rendering WebcamARViewer");
-    console.log("DishListScreen: selectedDishForAR =", selectedDishForAR);
-    console.log("DishListScreen: selectedDishForAR.name =", selectedDishForAR.name);
-    console.log("DishListScreen: selectedDishForAR.ingredients =", selectedDishForAR.ingredients);
-    return (
-      <WebcamARViewer
-        modelPath={selectedDishForAR.modelPath}
-        dish={selectedDishForAR}
-        onClose={closeAR}
-      />
-    );
-  }
-
-  if (arMode === "webcam" && selectedDishForAR) {
-    return (
-      <WebcamARViewer
-        modelPath={selectedDishForAR.modelPath}
-        dish={selectedDishForAR}
-        onClose={closeAR}
-      />
-    );
   }
 
   return (
@@ -324,22 +258,22 @@ export function DishListScreen() {
 
       <div className="relative z-10 w-full h-full flex flex-col">
         <div className="sticky top-0 z-20 backdrop-blur-2xl bg-white/80 border-b border-amber-200/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center gap-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-6 flex items-center gap-2 sm:gap-3 md:gap-4">
             <motion.button
               onClick={handleBack}
-              className="w-12 h-12 rounded-full bg-white backdrop-blur-xl border border-amber-200 shadow-lg flex items-center justify-center"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white backdrop-blur-xl border border-amber-200 shadow-lg flex items-center justify-center flex-shrink-0"
               whileHover={{
                 scale: 1.1,
                 boxShadow: "0 10px 30px rgba(212, 175, 55, 0.2)",
               }}
               whileTap={{ scale: 0.9 }}
             >
-              <ChevronLeft className="w-6 h-6 text-amber-700" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-amber-700" />
             </motion.button>
 
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <motion.h1
-                className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 bg-clip-text text-transparent"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-amber-700 via-amber-600 to-orange-600 bg-clip-text text-transparent truncate"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
@@ -348,7 +282,7 @@ export function DishListScreen() {
                 {selectedCategory.emoji} {selectedCategory.name}
               </motion.h1>
               <motion.p
-                className="text-gray-600 text-sm mt-1"
+                className="text-gray-600 text-xs sm:text-sm mt-0.5 sm:mt-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 }}

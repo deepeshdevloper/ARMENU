@@ -51,7 +51,11 @@ export const useARMenu = create<ARMenuState>((set) => ({
   
   setScreen: (screen) => {
     console.log(`useARMenu: setScreen called with "${screen}"`);
-    set({ currentScreen: screen });
+    if (screen === "dishList") {
+      set({ currentScreen: screen, selectedDish: null });
+    } else {
+      set({ currentScreen: screen });
+    }
   },
   selectCategory: (category) => {
     console.log('useARMenu: selectCategory called', category.name);
@@ -59,7 +63,7 @@ export const useARMenu = create<ARMenuState>((set) => ({
   },
   selectDish: (dish) => {
     console.log('useARMenu: selectDish called', dish.name);
-    set({ selectedDish: dish, currentScreen: "dishDetail" });
+    set({ selectedDish: dish, currentScreen: "ar" });
   },
   setLoading: (loading) => set({ isLoading: loading }),
   reset: () => set({ 

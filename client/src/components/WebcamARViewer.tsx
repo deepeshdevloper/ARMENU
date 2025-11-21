@@ -652,20 +652,20 @@ export function WebcamARViewer({
           </svg>
 
           <motion.div
-            className="absolute left-[12%] top-[20%] z-50 pointer-events-auto"
+            className="absolute left-[8%] sm:left-[12%] top-[18%] sm:top-[20%] z-50 pointer-events-auto"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <div className="relative bg-gradient-to-br from-green-500/95 to-emerald-600/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-2xl border-2 border-green-400/50 w-[220px] sm:w-[260px]">
-              <div className="flex items-center gap-2.5 mb-3">
-                <ChefHat size={22} className="text-white" />
-                <h3 className="text-white font-bold text-lg">Ingredients</h3>
+            <div className="relative bg-gradient-to-br from-green-500/95 to-emerald-600/95 backdrop-blur-md rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-5 shadow-2xl border-2 border-green-400/50 w-[140px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                <ChefHat size={16} className="text-white sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                <h3 className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg">Ingredients</h3>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
                 {dish.ingredients.map((ingredient: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-white rounded-full flex-shrink-0" />
-                    <span className="text-white/90 text-sm">{ingredient}</span>
+                  <div key={idx} className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 bg-white rounded-full flex-shrink-0" />
+                    <span className="text-white/90 text-[10px] sm:text-xs md:text-sm">{ingredient}</span>
                   </div>
                 ))}
               </div>
@@ -673,16 +673,16 @@ export function WebcamARViewer({
           </motion.div>
 
           <motion.div
-            className="absolute right-[12%] top-[12%] z-50 pointer-events-auto"
+            className="absolute right-[8%] sm:right-[12%] top-[10%] sm:top-[12%] z-50 pointer-events-auto"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <div className="relative bg-gradient-to-br from-purple-500/95 to-pink-600/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-2xl border-2 border-purple-400/50 w-[280px] sm:w-[320px]">
-              <div className="flex items-center gap-2.5 mb-2.5">
-                <Play size={22} className="text-white" />
-                <h3 className="text-white font-bold text-lg">Recipe Video</h3>
+            <div className="relative bg-gradient-to-br from-purple-500/95 to-pink-600/95 backdrop-blur-md rounded-lg sm:rounded-xl md:rounded-2xl p-2.5 sm:p-3 md:p-4 shadow-2xl border-2 border-purple-400/50 w-[160px] sm:w-[220px] md:w-[280px] lg:w-[320px]">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
+                <Play size={16} className="text-white sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                <h3 className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg">Recipe Video</h3>
               </div>
-              <div className="bg-black/30 rounded-lg overflow-hidden" style={{ height: '180px' }}>
+              <div className="bg-black/30 rounded-md sm:rounded-lg overflow-hidden aspect-video">
                 <video
                   className="w-full h-full object-cover"
                   autoPlay
@@ -698,29 +698,29 @@ export function WebcamARViewer({
           </motion.div>
 
           <motion.div
-            className="absolute right-[12%] bottom-[20%] z-50 pointer-events-auto"
+            className="absolute right-[8%] sm:right-[12%] bottom-[18%] sm:bottom-[20%] z-50 pointer-events-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="relative bg-gradient-to-br from-orange-500/95 to-red-600/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-2xl border-2 border-orange-400/50 w-[220px] sm:w-[260px]">
-              <div className="flex items-center gap-2.5 mb-3">
-                <AlertTriangle size={22} className="text-white" />
-                <h3 className="text-white font-bold text-lg">Allergens</h3>
+            <div className="relative bg-gradient-to-br from-orange-500/95 to-red-600/95 backdrop-blur-md rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-5 shadow-2xl border-2 border-orange-400/50 w-[140px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+                <AlertTriangle size={16} className="text-white sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                <h3 className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg">Allergens</h3>
               </div>
               {dish.allergens.includes("None") ? (
-                <div className="flex items-center gap-2">
-                  <Check size={18} className="text-white" />
-                  <span className="text-white/90 text-sm">No allergens</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Check size={14} className="text-white sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                  <span className="text-white/90 text-[10px] sm:text-xs md:text-sm">No allergens</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
                   {dish.allergens.map((allergen: string, idx: number) => (
-                    <div key={idx} className="flex items-center gap-2">
+                    <div key={idx} className="flex items-center gap-1.5 sm:gap-2">
                       <AlertTriangle
-                        size={16}
-                        className="text-white flex-shrink-0"
+                        size={12}
+                        className="text-white flex-shrink-0 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4"
                       />
-                      <span className="text-white/90 text-sm font-semibold">
+                      <span className="text-white/90 text-[10px] sm:text-xs md:text-sm font-semibold">
                         {allergen}
                       </span>
                     </div>

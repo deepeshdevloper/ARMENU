@@ -90,6 +90,13 @@ export function ARScreen() {
     };
   }, [trigger]);
 
+  useEffect(() => {
+    if (!isMobile) {
+      console.log("ARScreen: Desktop detected, auto-opening WebcamARViewer");
+      setShowWebcamViewer(true);
+    }
+  }, [isMobile]);
+
   if (!selectedDish) return null;
 
   if (showWebcamViewer && !isMobile) {
@@ -101,7 +108,10 @@ export function ARScreen() {
       <WebcamARViewer
         modelPath={selectedDish.modelPath}
         dish={selectedDish}
-        onClose={() => setShowWebcamViewer(false)}
+        onClose={() => {
+          console.log("ARScreen: WebcamARViewer closed, navigating back to dish list");
+          setScreen("dishList");
+        }}
       />
     );
   }
@@ -118,7 +128,7 @@ export function ARScreen() {
   return (
     <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-gray-50 via-white to-amber-50 overflow-hidden">
       <button
-        onClick={() => setScreen("dishDetail")}
+        onClick={() => setScreen("dishList")}
         className="absolute top-4 sm:top-6 left-4 sm:left-6 z-50 p-2 sm:p-3 rounded-full bg-white/90 backdrop-blur-md border border-amber-200 shadow-lg text-amber-700 hover:bg-white transition-colors safe-top safe-left"
       >
         <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
@@ -481,7 +491,10 @@ export function ARScreen() {
             }}
           >
             <motion.button
-              onClick={() => trigger("medium")}
+              onClick={() => {
+                trigger("medium");
+                console.log("ARScreen: Mobile AR button clicked");
+              }}
               className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-sm sm:text-base shadow-2xl border-2 border-white/30"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

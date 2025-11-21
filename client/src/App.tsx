@@ -3,7 +3,6 @@ import { useARMenu } from "./lib/stores/useARMenu";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { CategoryRingsScreen } from "./components/CategoryRingsScreen";
 import { DishListScreen } from "./components/DishListScreen";
-import { DishDetailScreen } from "./components/DishDetailScreen";
 import { ARScreen } from "./components/ARScreen";
 import "@fontsource/inter";
 
@@ -18,7 +17,6 @@ function App() {
         {currentScreen === "loading" && <LoadingScreen key="loading" />}
         {currentScreen === "categories" && <CategoryRingsScreen key="categories" />}
         {currentScreen === "dishList" && <DishListScreen key="dishList" />}
-        {currentScreen === "dishDetail" && <DishDetailScreen key="dishDetail" />}
         {currentScreen === "ar" && <ARScreen key="ar" />}
       </AnimatePresence>
     </div>
