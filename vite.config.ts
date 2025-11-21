@@ -16,7 +16,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "client", "src"),
     },
-    dedupe: ['three', '@react-three/fiber', '@react-three/drei'],
+    dedupe: ["three", "@react-three/fiber", "@react-three/drei"],
   },
   root: path.resolve(__dirname, "client"),
   build: {
@@ -25,17 +25,19 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+          "three-vendor": ["three", "@react-three/fiber", "@react-three/drei"],
         },
       },
     },
   },
   server: {
-    port: 3000,
-    open: true
+    host: '0.0.0.0',
+    port: 5000,
+    strictPort: true,
+    allowedHosts: true
   },
   optimizeDeps: {
-    include: ['three', '@react-three/fiber', '@react-three/drei'],
+    include: ["three", "@react-three/fiber", "@react-three/drei"],
   },
   // Add support for large models and audio files
   assetsInclude: ["**/*.gltf", "**/*.glb", "**/*.mp3", "**/*.ogg", "**/*.wav"],

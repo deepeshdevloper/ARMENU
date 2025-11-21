@@ -132,3 +132,23 @@ Preferred communication style: Simple, everyday language.
 - Vibration API for haptic feedback
 - Safe area insets for notch/home indicator handling
 - Touch-specific media queries
+
+## Recent Changes
+
+### November 20, 2025 - AR Information Overlays
+**Feature:** Added floating information boxes to AR and WebXR views
+
+**Implementation:**
+- `ARScreen.tsx`: Added three toggle buttons (Ingredients, Allergens, Recipe) that appear after the initial info card disappears
+- `WebcamARViewer.tsx`: Already had the floating info boxes implemented
+- Information boxes display:
+  - **Ingredients Box** (green gradient): Lists all dish ingredients with bullet points
+  - **Allergens Box** (orange/red gradient): Shows allergen warnings or "No common allergens" message
+  - **Recipe Video Box** (purple/pink gradient): Embedded iframe player for preparation videos (if available)
+
+**UX Details:**
+- Toggle buttons only appear when the initial dish info card is hidden (after 3 seconds)
+- Buttons are mutually exclusive - clicking one hides the others
+- Smooth animations using Framer Motion for enter/exit transitions
+- Mobile-responsive with icon-only buttons on small screens, full labels on larger screens
+- Positioned to avoid overlap with AR controls and model viewer

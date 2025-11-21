@@ -1,21 +1,82 @@
 import { useRef, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, AlertTriangle, Play, Check, X } from "lucide-react";
+import {
+  ChefHat,
+  AlertTriangle,
+  Play,
+  Check,
+  X,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+} from "lucide-react";
 import { useARMenu } from "@/lib/stores/useARMenu";
+import { useHaptics } from "@/hooks/useHaptics";
 
-function Model({ 
-  modelPath, 
-  scale = 2.5, 
+function FloatingInfoBox({
+  position,
+  title,
+  icon,
+  children,
+  color,
+}: {
+  position: [number, number, number];
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  color: string;
+}) {
+  return (
+    <Html
+      position={position}
+      center
+      distanceFactor={8}
+      occlude={false}
+      zIndexRange={[1000, 0]}
+      style={{
+        pointerEvents: "auto",
+        zIndex: 9999,
+      }}
+      transform
+      sprite
+    >
+      <div
+        className="bg-gradient-to-br backdrop-blur-md rounded-lg p-2.5 shadow-2xl border min-w-[130px] max-w-[170px]"
+        style={{
+          background: `linear-gradient(to bottom right, ${color}f2, ${color}e6)`,
+          borderColor: `${color}4d`,
+          boxShadow: `0 0 20px ${color}80`,
+        }}
+      >
+        <div className="flex items-center gap-1.5 mb-1.5">
+          {icon}
+          <h3 className="text-white font-bold text-xs">{title}</h3>
+        </div>
+        <div className="text-white/90 text-[10px] leading-relaxed">
+          {children}
+        </div>
+      </div>
+    </Html>
+  );
+}
+
+function Model({
+  modelPath,
+  scale = 2.5,
   rotation = { x: 0, y: 0 },
-  autoRotate = true
-}: { 
-  modelPath: string; 
+  autoRotate = true,
+  showInfoBoxes = false,
+  dish,
+}: {
+  modelPath: string;
   scale?: number;
   rotation?: { x: number; y: number };
   autoRotate?: boolean;
+  showInfoBoxes?: boolean;
+  dish?: any;
 }) {
   const { scene } = useGLTF(modelPath);
   const modelRef = useRef<THREE.Group>(null);
@@ -33,6 +94,15 @@ function Model({
 
   const clonedScene = scene.clone();
 
+  useEffect(() => {
+    if (showInfoBoxes && dish) {
+      console.log("🎁 RENDERING FLOATING BOXES!");
+      console.log("Dish:", dish.name);
+      console.log("Ingredients:", dish.ingredients);
+      console.log("Allergens:", dish.allergens);
+    }
+  }, [showInfoBoxes, dish]);
+
   return (
     <group ref={modelRef} scale={scale} position={[0, -0.5, 0]}>
       <primitive object={clonedScene} />
@@ -40,13 +110,21 @@ function Model({
   );
 }
 
-export function WebcamARViewer({ 
-  modelPath, 
-  onClose 
-}: { 
-  modelPath: string; 
+export function WebcamARViewer({
+  modelPath,
+  dish,
+  onClose,
+}: {
+  modelPath: string;
+  dish: any;
   onClose: () => void;
 }) {
+  console.log("WebcamARViewer: Component mounted/updated");
+  console.log("WebcamARViewer: Received dish prop =", dish);
+  console.log("WebcamARViewer: dish?.name =", dish?.name);
+  console.log("WebcamARViewer: dish?.ingredients =", dish?.ingredients);
+  console.log("WebcamARViewer: dish?.allergens =", dish?.allergens);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,13 +132,27 @@ export function WebcamARViewer({
   const [isPlaced, setIsPlaced] = useState(false);
   const [modelScale, setModelScale] = useState(2.5);
   const [modelRotation, setModelRotation] = useState({ x: 0, y: 0 });
-  const [mouseStart, setMouseStart] = useState<{ x: number; y: number } | null>(null);
+  const [mouseStart, setMouseStart] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [surfaceDetected, setSurfaceDetected] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
   const [showAllergens, setShowAllergens] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const { selectedDish } = useARMenu();
+  const [showFloatingBoxes, setShowFloatingBoxes] = useState(false);
+  const { trigger } = useHaptics();
+
+  useEffect(() => {
+    if (isPlaced) {
+      console.log("Dish placed! Showing floating boxes...");
+      setShowFloatingBoxes(true);
+      console.log("Selected dish:", dish?.name);
+      console.log("Dish ingredients:", dish?.ingredients);
+      console.log("Dish allergens:", dish?.allergens);
+      console.log("Show floating boxes:", true);
+    }
+  }, [isPlaced, dish]);
 
   useEffect(() => {
     let mounted = true;
@@ -69,16 +161,16 @@ export function WebcamARViewer({
       try {
         console.log("Requesting webcam access...");
         const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { 
+          video: {
             facingMode: "environment",
             width: { ideal: 1280 },
-            height: { ideal: 720 }
+            height: { ideal: 720 },
           },
           audio: false,
         });
 
         if (!mounted) {
-          mediaStream.getTracks().forEach(track => track.stop());
+          mediaStream.getTracks().forEach((track) => track.stop());
           return;
         }
 
@@ -127,6 +219,22 @@ export function WebcamARViewer({
     return () => clearTimeout(detectSurfaceTimer);
   }, [cameraReady, isPlaced]);
 
+  const handleZoomIn = () => {
+    setModelScale((prev) => Math.min(10, prev + 0.5));
+    trigger("light");
+  };
+
+  const handleZoomOut = () => {
+    setModelScale((prev) => Math.max(0.5, prev - 0.5));
+    trigger("light");
+  };
+
+  const handleReset = () => {
+    setModelRotation({ x: 0, y: 0 });
+    setModelScale(2.5);
+    trigger("light");
+  };
+
   return (
     <div className="fixed inset-0 w-full h-full bg-black overflow-hidden">
       <video
@@ -137,13 +245,13 @@ export function WebcamARViewer({
         className="absolute inset-0 w-full h-full object-cover"
       />
 
-      <div 
+      <div
         className="absolute inset-0 w-full h-full"
-        style={{ pointerEvents: isPlaced ? 'auto' : 'none' }}
+        style={{ pointerEvents: isPlaced ? "auto" : "none" }}
         onWheel={(e) => {
           if (isPlaced) {
             const delta = e.deltaY * -0.001;
-            setModelScale(prev => Math.max(0.5, Math.min(10, prev + delta)));
+            setModelScale((prev) => Math.max(0.5, Math.min(10, prev + delta)));
           }
         }}
         onMouseDown={(e) => {
@@ -182,10 +290,10 @@ export function WebcamARViewer({
           <ambientLight intensity={1.2} />
           <directionalLight position={[5, 5, 5]} intensity={1.5} castShadow />
           <pointLight position={[-5, 5, 5]} intensity={0.8} />
-          <spotLight 
-            position={[0, 10, 0]} 
-            intensity={1} 
-            angle={0.3} 
+          <spotLight
+            position={[0, 10, 0]}
+            intensity={1}
+            angle={0.3}
             penumbra={1}
             castShadow
           />
@@ -193,21 +301,28 @@ export function WebcamARViewer({
           {!isPlaced && (
             <mesh position={[0, -1, 0]} rotation-x={-Math.PI / 2}>
               <ringGeometry args={[0.4, 0.5, 32]} />
-              <meshBasicMaterial color="white" opacity={0.7} transparent side={THREE.DoubleSide} />
+              <meshBasicMaterial
+                color="white"
+                opacity={0.7}
+                transparent
+                side={THREE.DoubleSide}
+              />
             </mesh>
           )}
 
           <Suspense fallback={null}>
-            <Model 
-              modelPath={modelPath} 
+            <Model
+              modelPath={modelPath}
               scale={modelScale}
               rotation={modelRotation}
               autoRotate={!isPlaced}
+              showInfoBoxes={isPlaced}
+              dish={dish}
             />
           </Suspense>
 
           {!isPlaced && (
-            <OrbitControls 
+            <OrbitControls
               enablePan={false}
               enableZoom={false}
               enableRotate={false}
@@ -216,26 +331,43 @@ export function WebcamARViewer({
         </Canvas>
       </div>
 
-      <button
-        onClick={onClose}
-        className="absolute top-4 sm:top-6 left-4 sm:left-6 z-50 p-2 sm:p-3 rounded-full bg-black/70 backdrop-blur-md text-white hover:bg-black/90 transition-colors pointer-events-auto safe-top safe-left"
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute top-4 sm:top-6 left-4 right-4 z-50 safe-top pointer-events-auto"
       >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="20" 
-          height="20" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className="sm:w-6 sm:h-6"
-        >
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
-      </button>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={onClose}
+            className="p-2 sm:p-3 rounded-full bg-black/70 backdrop-blur-md text-white hover:bg-black/90 transition-colors shadow-lg"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="sm:w-6 sm:h-6"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
 
+          {isPlaced && (
+            <button
+              onClick={handleReset}
+              className="p-2 sm:p-3 bg-black/70 backdrop-blur-md rounded-full text-white hover:bg-black/90 transition-all flex items-center gap-1.5 sm:gap-2 shadow-lg"
+            >
+              <RotateCw size={16} className="sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-medium">Reset</span>
+            </button>
+          )}
+        </div>
+      </motion.div>
 
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-40 pointer-events-auto px-4">
@@ -243,9 +375,7 @@ export function WebcamARViewer({
             <p className="text-white font-semibold text-base sm:text-lg mb-2">
               ⚠️ Camera Access Error
             </p>
-            <p className="text-white/90 text-xs sm:text-sm mb-4">
-              {error}
-            </p>
+            <p className="text-white/90 text-xs sm:text-sm mb-4">{error}</p>
             <button
               onClick={onClose}
               className="px-4 sm:px-6 py-2 bg-white text-red-600 rounded-full font-semibold hover:bg-gray-100 transition-colors text-sm sm:text-base"
@@ -260,28 +390,47 @@ export function WebcamARViewer({
         <>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
             <div className="relative">
-              <div className={`w-32 h-32 sm:w-40 sm:h-40 border-2 rounded-lg relative transition-all duration-300 ${
-                surfaceDetected 
-                  ? 'border-green-400/80 shadow-lg shadow-green-400/20' 
-                  : 'border-yellow-400/60'
-              }`}>
-                <div className={`absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 transition-colors ${
-                  surfaceDetected ? 'border-green-400' : 'border-yellow-400'
-                }`}></div>
-                <div className={`absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 transition-colors ${
-                  surfaceDetected ? 'border-green-400' : 'border-yellow-400'
-                }`}></div>
-                <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 transition-colors ${
-                  surfaceDetected ? 'border-green-400' : 'border-yellow-400'
-                }`}></div>
-                <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 transition-colors ${
-                  surfaceDetected ? 'border-green-400' : 'border-yellow-400'
-                }`}></div>
-                
+              <div
+                className={`w-32 h-32 sm:w-40 sm:h-40 border-2 rounded-lg relative transition-all duration-300 ${
+                  surfaceDetected
+                    ? "border-green-400/80 shadow-lg shadow-green-400/20"
+                    : "border-yellow-400/60"
+                }`}
+              >
+                <div
+                  className={`absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 transition-colors ${
+                    surfaceDetected ? "border-green-400" : "border-yellow-400"
+                  }`}
+                ></div>
+                <div
+                  className={`absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 transition-colors ${
+                    surfaceDetected ? "border-green-400" : "border-yellow-400"
+                  }`}
+                ></div>
+                <div
+                  className={`absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 transition-colors ${
+                    surfaceDetected ? "border-green-400" : "border-yellow-400"
+                  }`}
+                ></div>
+                <div
+                  className={`absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 transition-colors ${
+                    surfaceDetected ? "border-green-400" : "border-yellow-400"
+                  }`}
+                ></div>
+
                 <div className="absolute inset-0 flex items-center justify-center">
                   {surfaceDetected ? (
                     <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     </div>
@@ -290,17 +439,19 @@ export function WebcamARViewer({
                   )}
                 </div>
               </div>
-              
+
               <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                <div className={`backdrop-blur-sm px-3 py-1 rounded-full transition-colors ${
-                  surfaceDetected 
-                    ? 'bg-green-500/80' 
-                    : 'bg-black/60'
-                }`}>
-                  <p className={`text-xs font-semibold transition-colors ${
-                    surfaceDetected ? 'text-white' : 'text-yellow-400'
-                  }`}>
-                    {surfaceDetected ? '✓ Surface Locked' : 'Scanning...'}
+                <div
+                  className={`backdrop-blur-sm px-3 py-1 rounded-full transition-colors ${
+                    surfaceDetected ? "bg-green-500/80" : "bg-black/60"
+                  }`}
+                >
+                  <p
+                    className={`text-xs font-semibold transition-colors ${
+                      surfaceDetected ? "text-white" : "text-yellow-400"
+                    }`}
+                  >
+                    {surfaceDetected ? "✓ Surface Locked" : "Scanning..."}
                   </p>
                 </div>
               </div>
@@ -318,7 +469,9 @@ export function WebcamARViewer({
                 <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl text-white text-center border border-white/20">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                    <p className="font-bold text-xs sm:text-sm">Finding Surface...</p>
+                    <p className="font-bold text-xs sm:text-sm">
+                      Finding Surface...
+                    </p>
                   </div>
                   <p className="text-[10px] sm:text-xs text-white/80">
                     Keep camera steady on table
@@ -332,11 +485,23 @@ export function WebcamARViewer({
                 >
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-green-600"
+                      >
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
                     </div>
-                    <p className="font-bold text-sm sm:text-base">Surface Detected!</p>
+                    <p className="font-bold text-sm sm:text-base">
+                      Surface Detected!
+                    </p>
                   </div>
                   <p className="text-[10px] sm:text-xs text-white/90">
                     Ready to place your dish
@@ -348,8 +513,8 @@ export function WebcamARViewer({
                 disabled={!surfaceDetected}
                 className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold text-sm sm:text-base transition-all shadow-lg ${
                   surfaceDetected
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white cursor-pointer'
-                    : 'bg-gray-500/50 text-white/50 cursor-not-allowed'
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white cursor-pointer"
+                    : "bg-gray-500/50 text-white/50 cursor-not-allowed"
                 }`}
               >
                 Place Dish Here
@@ -359,62 +524,8 @@ export function WebcamARViewer({
         </>
       )}
 
-      {cameraReady && !error && isPlaced && selectedDish && (
+      {cameraReady && !error && isPlaced && dish && (
         <>
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-16 sm:top-20 left-4 right-4 z-40 flex gap-2 justify-center safe-top pointer-events-auto"
-          >
-            <button
-              onClick={() => {
-                setShowIngredients(!showIngredients);
-                setShowAllergens(false);
-                setShowVideo(false);
-              }}
-              className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
-                showIngredients 
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-                  : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
-              }`}
-            >
-              <ChefHat size={14} />
-              <span className="hidden sm:inline">Ingredients</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowAllergens(!showAllergens);
-                setShowIngredients(false);
-                setShowVideo(false);
-              }}
-              className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
-                showAllergens 
-                  ? 'bg-gradient-to-r from-orange-500 to-red-600' 
-                  : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
-              }`}
-            >
-              <AlertTriangle size={14} />
-              <span className="hidden sm:inline">Allergens</span>
-            </button>
-            {selectedDish.videoUrl && (
-              <button
-                onClick={() => {
-                  setShowVideo(!showVideo);
-                  setShowIngredients(false);
-                  setShowAllergens(false);
-                }}
-                className={`px-3 py-2 rounded-lg text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg ${
-                  showVideo 
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-600' 
-                    : 'bg-white/20 backdrop-blur-md hover:bg-white/30'
-                }`}
-              >
-                <Play size={14} />
-                <span className="hidden sm:inline">Recipe</span>
-              </button>
-            )}
-          </motion.div>
-
           <AnimatePresence>
             {showIngredients && (
               <motion.div
@@ -426,11 +537,16 @@ export function WebcamARViewer({
                 <div className="bg-gradient-to-br from-green-500/95 to-emerald-600/95 backdrop-blur-md rounded-xl p-4 shadow-2xl border-2 border-green-300/30">
                   <div className="flex items-center gap-2 mb-3">
                     <ChefHat size={18} className="text-white" />
-                    <h3 className="text-white font-bold text-sm">Ingredients</h3>
+                    <h3 className="text-white font-bold text-sm">
+                      Ingredients
+                    </h3>
                   </div>
                   <div className="space-y-1.5">
-                    {selectedDish.ingredients.map((ingredient, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-white/90">
+                    {dish.ingredients.map((ingredient: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 text-white/90"
+                      >
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
                         <span className="text-xs">{ingredient}</span>
                       </div>
@@ -450,19 +566,26 @@ export function WebcamARViewer({
                 <div className="bg-gradient-to-br from-orange-500/95 to-red-600/95 backdrop-blur-md rounded-xl p-4 shadow-2xl border-2 border-orange-300/30">
                   <div className="flex items-center gap-2 mb-3">
                     <AlertTriangle size={18} className="text-white" />
-                    <h3 className="text-white font-bold text-sm">Allergen Information</h3>
+                    <h3 className="text-white font-bold text-sm">
+                      Allergen Information
+                    </h3>
                   </div>
-                  {selectedDish.allergens.includes("None") ? (
+                  {dish.allergens.includes("None") ? (
                     <div className="flex items-center gap-2 text-white/90">
                       <Check size={14} className="text-white" />
                       <span className="text-xs">No common allergens</span>
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      {selectedDish.allergens.map((allergen, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-white/90">
+                      {dish.allergens.map((allergen: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 text-white/90"
+                        >
                           <AlertTriangle size={12} className="text-white" />
-                          <span className="text-xs font-semibold">{allergen}</span>
+                          <span className="text-xs font-semibold">
+                            {allergen}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -471,7 +594,7 @@ export function WebcamARViewer({
               </motion.div>
             )}
 
-            {showVideo && selectedDish.videoUrl && (
+            {showVideo && dish.videoUrl && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -482,7 +605,9 @@ export function WebcamARViewer({
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Play size={18} className="text-white" />
-                      <h3 className="text-white font-bold text-sm">Recipe Video</h3>
+                      <h3 className="text-white font-bold text-sm">
+                        Recipe Video
+                      </h3>
                     </div>
                     <button
                       onClick={() => setShowVideo(false)}
@@ -493,7 +618,7 @@ export function WebcamARViewer({
                   </div>
                   <div className="aspect-video bg-black/20 rounded-lg overflow-hidden">
                     <iframe
-                      src={selectedDish.videoUrl}
+                      src={dish.videoUrl}
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -506,27 +631,148 @@ export function WebcamARViewer({
         </>
       )}
 
-      {cameraReady && !error && isPlaced && (
-        <motion.div
-          className="absolute bottom-4 sm:bottom-6 right-4 z-40 pointer-events-auto safe-bottom safe-right"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="bg-black/60 backdrop-blur-md border border-white/20 rounded-lg p-2.5 sm:p-3 text-right max-w-[180px] sm:max-w-[200px]">
-            <p className="text-white text-xs font-semibold mb-1">
-              ✨ Dish Placed!
-            </p>
-            <p className="text-white/60 text-[10px] sm:text-xs leading-tight">
-              Drag to rotate<br/>
-              Scroll to zoom
-            </p>
-            <div className="mt-2 pt-2 border-t border-white/10">
-              <p className="text-white/50 text-[9px] sm:text-[10px]">
-                Scale: {modelScale.toFixed(1)}x
-              </p>
+      {cameraReady && !error && isPlaced && dish && (
+        <>
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+            <defs>
+              <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto" markerUnits="strokeWidth">
+                <circle cx="4" cy="4" r="2.5" fill="#10b981" opacity="0.7" />
+              </marker>
+              <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto" markerUnits="strokeWidth">
+                <circle cx="4" cy="4" r="2.5" fill="#a855f7" opacity="0.7" />
+              </marker>
+              <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto" markerUnits="strokeWidth">
+                <circle cx="4" cy="4" r="2.5" fill="#f97316" opacity="0.7" />
+              </marker>
+            </defs>
+            <circle cx="50%" cy="58%" r="2" fill="white" opacity="0.3" />
+            <line x1="50%" y1="58%" x2="20%" y2="28%" stroke="#10b981" strokeWidth="2" strokeDasharray="5,3" opacity="0.5" markerEnd="url(#arrowGreen)" />
+            <line x1="50%" y1="58%" x2="68%" y2="20%" stroke="#a855f7" strokeWidth="2" strokeDasharray="5,3" opacity="0.5" markerEnd="url(#arrowPurple)" />
+            <line x1="50%" y1="58%" x2="80%" y2="78%" stroke="#f97316" strokeWidth="2" strokeDasharray="5,3" opacity="0.5" markerEnd="url(#arrowOrange)" />
+          </svg>
+
+          <motion.div
+            className="absolute left-[12%] top-[20%] z-50 pointer-events-auto"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="relative bg-gradient-to-br from-green-500/95 to-emerald-600/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-2xl border-2 border-green-400/50 w-[220px] sm:w-[260px]">
+              <div className="flex items-center gap-2.5 mb-3">
+                <ChefHat size={22} className="text-white" />
+                <h3 className="text-white font-bold text-lg">Ingredients</h3>
+              </div>
+              <div className="space-y-2">
+                {dish.ingredients.map((ingredient: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-white rounded-full flex-shrink-0" />
+                    <span className="text-white/90 text-sm">{ingredient}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="absolute right-[12%] top-[12%] z-50 pointer-events-auto"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <div className="relative bg-gradient-to-br from-purple-500/95 to-pink-600/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-2xl border-2 border-purple-400/50 w-[280px] sm:w-[320px]">
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <Play size={22} className="text-white" />
+                <h3 className="text-white font-bold text-lg">Recipe Video</h3>
+              </div>
+              <div className="bg-black/30 rounded-lg overflow-hidden" style={{ height: '180px' }}>
+                <video
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="absolute right-[12%] bottom-[20%] z-50 pointer-events-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="relative bg-gradient-to-br from-orange-500/95 to-red-600/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-2xl border-2 border-orange-400/50 w-[220px] sm:w-[260px]">
+              <div className="flex items-center gap-2.5 mb-3">
+                <AlertTriangle size={22} className="text-white" />
+                <h3 className="text-white font-bold text-lg">Allergens</h3>
+              </div>
+              {dish.allergens.includes("None") ? (
+                <div className="flex items-center gap-2">
+                  <Check size={18} className="text-white" />
+                  <span className="text-white/90 text-sm">No allergens</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {dish.allergens.map((allergen: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <AlertTriangle
+                        size={16}
+                        className="text-white flex-shrink-0"
+                      />
+                      <span className="text-white/90 text-sm font-semibold">
+                        {allergen}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="absolute bottom-4 sm:bottom-6 right-4 z-40 pointer-events-auto safe-bottom safe-right"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="bg-black/60 backdrop-blur-md border border-white/20 rounded-lg p-2.5 sm:p-3 text-right max-w-[180px] sm:max-w-[200px]">
+              <p className="text-white text-xs font-semibold mb-1">
+                ✨ Dish Placed!
+              </p>
+              <p className="text-white/60 text-[10px] sm:text-xs leading-tight">
+                Drag to rotate
+                <br />
+                Scroll to zoom
+              </p>
+              <div className="mt-2 pt-2 border-t border-white/10">
+                <p className="text-white/50 text-[9px] sm:text-[10px]">
+                  Scale: {modelScale.toFixed(1)}x
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="absolute bottom-4 sm:bottom-6 left-4 z-40 pointer-events-auto safe-bottom safe-left flex flex-col gap-2"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <button
+              onClick={handleZoomIn}
+              className="p-2.5 sm:p-3 bg-black/70 backdrop-blur-md rounded-full text-white hover:bg-black/90 transition-colors shadow-lg"
+              title="Zoom In"
+            >
+              <ZoomIn size={18} className="sm:w-5 sm:h-5" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="p-2.5 sm:p-3 bg-black/70 backdrop-blur-md rounded-full text-white hover:bg-black/90 transition-colors shadow-lg"
+              title="Zoom Out"
+            >
+              <ZoomOut size={18} className="sm:w-5 sm:h-5" />
+            </button>
+          </motion.div>
+        </>
       )}
     </div>
   );
